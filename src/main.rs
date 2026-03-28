@@ -8,6 +8,7 @@ use bevy::prelude::*;
 
 use data::build_world_data;
 use resources::*;
+use systems::debug::{screenshot_on_f12, state_dump_on_f11};
 use systems::fronts::{advance_fronts, faction_tension_effects};
 use systems::interaction::{build_interaction, build_travel_options};
 use systems::npc_ai::{faction_power_tick, npc_movement, npc_wealth_tick, spread_rumors};
@@ -66,6 +67,8 @@ fn main() {
                 handle_npc_interaction_from_location,
                 keyboard_shortcuts,
                 highlight_player_location,
+                screenshot_on_f12,
+                state_dump_on_f11,
             ),
         )
         .run();
