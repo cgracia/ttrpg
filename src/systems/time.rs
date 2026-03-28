@@ -13,7 +13,7 @@ pub fn advance_time(
         return;
     }
 
-    time.real_timer += real_time.delta_seconds();
+    time.real_timer += real_time.delta_secs();
     if time.real_timer >= time.seconds_per_turn {
         time.real_timer -= time.seconds_per_turn;
         time.turn += 1;

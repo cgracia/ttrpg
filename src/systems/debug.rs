@@ -1,12 +1,16 @@
-/// Debug tools: screenshot hint logging and world state dump.
-use bevy::prelude::*;
+/// Debug tools: screenshot capture and world state dump.
+use bevy::{
+    prelude::*,
+    render::view::screenshot::{save_to_disk, Screenshot},
+};
 
 use crate::components::*;
 use crate::resources::*;
 
-/// Press F12 to log a screenshot hint for manual capture.
+/// Press F12 to save a screenshot to `screenshots/latest.png`.
 pub fn screenshot_on_f12(
     keyboard: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
     mut event_log: ResMut<EventLog>,
     time: Res<WorldTime>,
 ) {
@@ -17,18 +21,13 @@ pub fn screenshot_on_f12(
     let dir = "screenshots";
     std::fs::create_dir_all(dir).ok();
 
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
+    commands
+        .spawn(Screenshot::primary_window())
+        .observe(save_to_disk(format!("{dir}/latest.png")));
 
-    // Bevy 0.14 doesn't have a simple screenshot API we can call from a system
-    // without the render world. Instead, we log the instruction for the user.
-    // For automated use, the state dump (F11) is more useful.
-    info!("Screenshot requested — use OS screenshot tool or F11 for state dump");
     event_log.push_at(
         time.turn,
-        format!("Debug: screenshot requested (ts={}). Use F11 for state dump.", timestamp),
+        "Debug: screenshot requested -> screenshots/latest.png".into(),
     );
 }
 
@@ -77,7 +76,7 @@ pub fn state_dump_on_f11(
     ));
 
     // Player
-    if let Ok((at_loc, wealth, knowledge, stats)) = player_q.get_single() {
+    if let Ok((at_loc, wealth, knowledge, stats)) = player_q.single() {
         let loc_name = world_state.location_name(at_loc.0).unwrap_or("?");
         out.push_str("── PLAYER ──\n");
         out.push_str(&format!("  Location: {}\n", loc_name));
@@ -198,7 +197,7 @@ pub fn state_dump_on_f11(
     // Write file
     let path = format!("{}/world_state.txt", dir);
     match std::fs::write(&path, &out) {
-        Ok(_) => info!("World state dumped to {}", path),
-        Err(e) => warn!("Failed to dump world state: {}", e),
+        Ok(_) => {}
+        Err(e) => eprintln!("Failed to dump world state: {}", e),
     }
 }

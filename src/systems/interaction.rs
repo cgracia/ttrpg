@@ -81,7 +81,7 @@ pub fn build_travel_options(
         return;
     }
 
-    if let Ok(at) = player.get_single() {
+    if let Ok(at) = player.single() {
         interaction.dialogue_lines.clear();
         interaction.options.clear();
         interaction.selected_npc = None;
@@ -128,7 +128,7 @@ pub fn execute_player_action(
                     interaction.dialogue_lines.push(format!("\"{}\"", rumor));
 
                     // Player learns the rumor
-                    if let Ok((_, mut player_know)) = player_query.get_single_mut() {
+                    if let Ok((_, mut player_know)) = player_query.single_mut() {
                         player_know.0.push(crate::components::Rumor {
                             text: rumor,
                             credibility: 60,
@@ -165,7 +165,7 @@ pub fn execute_player_action(
         }
 
         PlayerAction::TravelTo(dest) => {
-            if let Ok((mut at_loc, _)) = player_query.get_single_mut() {
+            if let Ok((mut at_loc, _)) = player_query.single_mut() {
                 let dest_name = world.location_name(dest).unwrap_or("unknown");
                 log.push_at(time.turn, format!("You travel to {}.", dest_name));
                 at_loc.0 = dest;

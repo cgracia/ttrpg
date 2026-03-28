@@ -2,7 +2,7 @@
 
 ## Overview
 
-Ashenveil is a **simulation-driven RPG** built in **Bevy 0.14 + Rust**. The player inhabits a living world of autonomous NPCs, evolving factions, and hidden information. Core fantasy: *you are one person in a world that moves without you — but where your choices meaningfully shape outcomes.*
+Ashenveil is a **simulation-driven RPG** built in **Bevy 0.18 + Rust**. The player inhabits a living world of autonomous NPCs, evolving factions, and hidden information. Core fantasy: *you are one person in a world that moves without you — but where your choices meaningfully shape outcomes.*
 
 ## Design Pillars
 
@@ -57,7 +57,7 @@ Ashenveil is a **simulation-driven RPG** built in **Bevy 0.14 + Rust**. The play
 
 Simulation systems are chained in `main.rs`:
 ```
-advance_time → apply_deferred → npc_movement → npc_wealth_tick → faction_power_tick → spread_rumors → advance_fronts → faction_tension_effects → cleanup_tick
+advance_time → npc_movement → npc_wealth_tick → faction_power_tick → spread_rumors → advance_fronts → faction_tension_effects → cleanup_tick
 ```
 
 UI systems run in parallel (no chain needed).
@@ -66,14 +66,14 @@ UI systems run in parallel (no chain needed).
 
 - **Without<T> filters**: Required to avoid query conflicts (e.g., Player vs Npc queries both accessing AtLocation)
 - **TickEvent resource**: Simulation systems guard on `Res<TickEvent>` existence — only run logic when a tick fires
-- **apply_deferred**: Used between startup systems and after advance_time to flush command buffers
+- **Chained systems**: The update chain preserves simulation ordering and Bevy inserts deferred application points automatically where needed
 - **Entity references**: Components like `AtLocation(Entity)`, `FactionMember(Entity)`, `Connections(Vec<Entity>)` store entity handles directly
 
 ### Known Pitfalls
 
-- Bevy 0.14 uses `Camera2dBundle`, `NodeBundle`, `ButtonBundle`, `TextBundle` (not the Bevy 0.15+ simplified syntax)
+- Bevy 0.18 uses the component-style UI and camera API (`Camera2d`, `Node`, `Button`, `Text`) instead of the older bundle wrappers
 - Query conflicts: any two queries accessing the same component mutably (or one mutable + one immutable) on overlapping archetypes must use `Without<T>` filters
-- `apply_deferred` must be explicitly scheduled between systems that spawn entities and systems that query those entities
+- `Query::single()` and `single_mut()` return `Result`; handle missing or duplicate matches explicitly
 
 ## Current State
 
@@ -83,7 +83,7 @@ UI systems run in parallel (no chain needed).
 
 ## Visual Feedback (Debug Tools)
 
-- **F12** — Screenshot hint → logs a reminder to capture manually with OS tools
+- **F12** — Screenshot → saves to `screenshots/latest.png`
 - **F11** — State dump → saves world state to `debug/world_state.txt`
 
 These let AI skills "see" the game and analyze simulation state.

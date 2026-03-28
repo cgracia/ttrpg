@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Ashenveil — Intrigue Prototype".into(),
-                resolution: (1200.0, 700.0).into(),
+                resolution: (1200, 700).into(),
                 ..default()
             }),
             ..default()
@@ -33,13 +33,12 @@ fn main() {
         .insert_resource(GameMode::default())
         .insert_resource(InteractionState::default())
         // Startup
-        .add_systems(Startup, (setup_world, apply_deferred, spawn_ui, spawn_map_nodes).chain())
+        .add_systems(Startup, (setup_world, spawn_ui, spawn_map_nodes).chain())
         // Simulation (runs every frame, guards internally on TickEvent)
         .add_systems(
             Update,
             (
                 advance_time,
-                apply_deferred,
                 npc_movement,
                 npc_wealth_tick,
                 faction_power_tick,
@@ -80,7 +79,7 @@ fn setup_world(
     mut event_log: ResMut<EventLog>,
 ) {
     // 2D camera
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     let world_data = build_world_data();
     data::spawn_world(&mut commands, &world_data, &mut world_state, &mut event_log);
@@ -91,7 +90,7 @@ fn highlight_player_location(
     player: Query<&components::AtLocation, With<components::Player>>,
     mut nodes: Query<(&LocationNodeUi, &mut BackgroundColor)>,
 ) {
-    let Ok(player_at) = player.get_single() else { return };
+    let Ok(player_at) = player.single() else { return };
     for (node, mut bg) in nodes.iter_mut() {
         let is_here = node.location_entity == player_at.0;
         // Only set default/player colour; hover colour is set in handle_location_clicks
