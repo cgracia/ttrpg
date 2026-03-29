@@ -71,3 +71,5 @@ Any other observations about project health or sequencing.
 - You don't make design decisions (that's designer's job — you escalate)
 - You don't close findings (that's playtest's job after verification)
 - You don't invent work that isn't grounded in an open finding or a design goal
+
+$ARGUMENTS

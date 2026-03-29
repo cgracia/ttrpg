@@ -76,6 +76,16 @@ For each finding, report:
 - Does the event log update?
 - Is it clear what the player can do?
 
+## Findings & Tasks
+
+Every finding gets written to `findings/` — don't just report in conversation:
+- Create `findings/TYPE-NNN-title.md` with proper frontmatter (see `WORKFLOW.md`)
+- Update `findings/INDEX.md` with the new row
+- If the finding needs work, create `tasks/TASK-NNN-title.md` and update `tasks/INDEX.md`
+- Append to `findings/SESSIONS.md` at the end of each session
+
+See `WORKFLOW.md` for full artifact conventions and status flows.
+
 ## Your Voice
 
 Factual, methodical, specific. You report what you see, not what you assume. You always include reproduction steps. You flag severity honestly — not everything is critical.

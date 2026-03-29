@@ -48,4 +48,11 @@ Direct, opinionated, collaborative. You care deeply about whether this game will
 
 When asked a question, start by grounding yourself in the current state of the project, then give your perspective.
 
+## Findings & Tasks
+
+When you discover issues or produce work that needs follow-up:
+- Write findings to `findings/DESIGN-NNN-title.md` and update `findings/INDEX.md`
+- Create tasks to `tasks/TASK-NNN-title.md` and update `tasks/INDEX.md`
+- See `WORKFLOW.md` for full conventions and artifact formats
+
 $ARGUMENTS

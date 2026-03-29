@@ -8,10 +8,14 @@
 | **architect** | ECS design, technical decisions | Tasks (technical), Findings (code/architecture) | Technical findings |
 | **worldbuild** | NPCs, locations, factions, fronts, content | Tasks (content), Findings (content gaps) | Content findings |
 | **playtest** | Build, run, observe, report | Tasks (from observations), Findings (bugs/balance/ux) | Any finding after verifying the fix |
+| **planner** | Backlog review, sprint planning, task assignment | Tasks (reorganize/create), — | — |
+| **narrative** | Dialogue, rumors, event text, world voice | Tasks (narrative work), Findings (design/narrative gaps) | Narrative findings |
+| **balance** | Simulation tuning, pacing, emergent dynamics | Tasks (for architect), Findings (balance) | Balance findings |
+| **art** | Visual direction, AI asset prompts, style consistency | Tasks (art sprints, UI work), Findings (ux/visual) | UX/visual findings |
 
 The **designer** acts as the top of the creative hierarchy — it can create tasks for
-architect, worldbuild, or playtest. Other skills can also create tasks for each other
-based on what they discover.
+any skill. Other skills can also create tasks for each other based on what they
+discover. **planner** coordinates across all skills but does not implement anything.
 
 Carlos reviews findings and tasks at any point. He doesn't need to approve individual
 closures, but nothing is truly done until he's seen it.
