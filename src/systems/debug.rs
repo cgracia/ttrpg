@@ -24,17 +24,29 @@ pub fn screenshot_on_f12(
     std::fs::create_dir_all(dir).ok();
     let path = format!("{dir}/latest.png");
 
-    // Try scrot first — reliable in X11 environments where Bevy captures a black frame
-    let captured_externally = std::process::Command::new("scrot")
+    // Try grim (Wayland-native) → scrot (X11 fallback) → Bevy API (last resort)
+    let tool = if std::process::Command::new("grim")
+        .args([&path])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+    {
+        Some("grim")
+    } else if std::process::Command::new("scrot")
         .args(["-d", "0", "--overwrite", &path])
         .status()
         .map(|s| s.success())
-        .unwrap_or(false);
+        .unwrap_or(false)
+    {
+        Some("scrot")
+    } else {
+        None
+    };
 
-    if captured_externally {
+    if let Some(tool_name) = tool {
         event_log.push_at(
             time.turn,
-            "Debug: screenshot saved (scrot) -> screenshots/latest.png".into(),
+            format!("Debug: screenshot saved ({tool_name}) -> screenshots/latest.png"),
         );
     } else {
         // Fall back to Bevy's screenshot API (may produce black image in some environments)
@@ -73,7 +85,14 @@ pub fn state_dump_on_f11(
     front_q: Query<(&Front, &FrontStages)>,
     mode: Res<GameMode>,
 ) {
-    if !keyboard.just_pressed(KeyCode::F11) {
+    // Also trigger from file: playtest skill writes `debug/trigger` to request a dump.
+    let trigger_path = "debug/trigger";
+    let file_triggered = std::path::Path::new(trigger_path).exists();
+    if file_triggered {
+        let _ = std::fs::remove_file(trigger_path);
+    }
+
+    if !keyboard.just_pressed(KeyCode::F11) && !file_triggered {
         return;
     }
 

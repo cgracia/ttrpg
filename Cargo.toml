@@ -2,6 +2,7 @@
 name = "ttrpg"
 version = "0.1.0"
 edition = "2021"
+default-run = "ttrpg"
 
 [dependencies]
 bevy = { version = "0.18.1", default-features = false, features = [
@@ -27,6 +28,10 @@ rand = "0.8"
 [[bin]]
 name = "ttrpg"
 path = "src/main.rs"
+
+[[bin]]
+name = "simulate"
+path = "src/simulate.rs"
 
 [profile.dev]
 opt-level = 1

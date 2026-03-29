@@ -7,7 +7,7 @@
 | TASK-003 | balance | low | open | Differentiate faction starting tension and front escalation targeting |
 | TASK-004 | worldbuild | medium | open | Add NPC presence to Market District |
 | TASK-005 | designer | low | done | Make a design decision on North Watchtower |
-| TASK-006 | architect | medium | done | Fix F12 screenshot producing black image |
+| TASK-006 | architect | medium | open | Fix F12 screenshot producing black image (scrot fix fails on Wayland) |
 | TASK-007 | balance | high | open | Double all front countdown values in data.rs |
 | TASK-008 | architect | medium | open | Implement optional successor_front and front chaining logic |
 | TASK-009 | worldbuild | medium | open | Write successor front content for both existing fronts |

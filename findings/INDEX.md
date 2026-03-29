@@ -2,8 +2,8 @@
 
 | ID | Type | Severity | Status | Title |
 |----|------|----------|--------|-------|
-| BUG-001 | bug | major | needs-verify | Rumor spread system non-functional |
-| BUG-002 | bug | major | needs-verify | Screenshot (F12) produces black image |
+| BUG-001 | bug | major | fixed | Rumor spread system non-functional |
+| BUG-002 | bug | major | open | Screenshot (F12) produces black image (Wayland: scrot fix ineffective) |
 | BAL-001 | balance | major | open | Fronts resolve before turn 25, world goes static |
 | BAL-002 | balance | minor | open | All factions start at identical tension |
 | UX-001 | ux | minor | open | Market District consistently empty of NPCs |
