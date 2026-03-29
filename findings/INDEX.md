@@ -1,12 +1,21 @@
 # Findings Index
 
-| ID | Type | Severity | Status | Title |
-|----|------|----------|--------|-------|
-| BUG-001 | bug | major | fixed | Rumor spread system non-functional |
-| BUG-002 | bug | major | open | Screenshot (F12) produces black image (Wayland: scrot fix ineffective) |
-| BAL-001 | balance | major | open | Fronts resolve before turn 25, world goes static |
-| BAL-002 | balance | minor | open | All factions start at identical tension |
-| UX-001 | ux | minor | open | Market District consistently empty of NPCs |
-| DESIGN-001 | design | minor | in-progress | North Watchtower is a dead-end |
+> **Findings are now tracked as GitHub Issues.**
+> https://github.com/cgracia/ttrpg/issues?q=label%3Afinding
+>
+> Use `gh issue list --label finding` to see open findings.
+> Use `gh issue list --label finding --state all` to see full history.
+>
+> To filter by type: `gh issue list --label "finding,bug"`
+> To filter by severity: `gh issue list --label "finding,severity:major"`
 
-## Status values: open · in-progress · fixed · wont-fix · needs-verify
+## Issue Map
+
+| Local ID | GitHub Issue |
+|----------|-------------|
+| BUG-001  | #1 (closed/fixed) |
+| BUG-002  | #2 |
+| BAL-001  | #3 |
+| BAL-002  | #4 |
+| UX-001   | #5 |
+| DESIGN-001 | #6 |

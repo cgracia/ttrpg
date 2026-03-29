@@ -22,91 +22,135 @@ closures, but nothing is truly done until he's seen it.
 
 ---
 
-## Two Artifact Types
+## Issue Tracking — GitHub Issues
 
-### findings/ — Passive discoveries
-Things observed to be wrong, missing, or worth questioning. Created during any skill
-session. Closed by **playtest** after verifying the fix is in place, or by the
-originating skill if it's a design/content issue.
+**Tasks and findings are tracked as GitHub Issues.**
+Repo: https://github.com/cgracia/ttrpg
 
+### Useful queries (via `gh` CLI)
+
+```bash
+# All open tasks
+gh issue list --label task
+
+# Open tasks for a specific skill
+gh issue list --label "task,skill:architect"
+
+# Current sprint tasks
+gh issue list --label "task,sprint:current"
+
+# All open findings
+gh issue list --label finding
+
+# Open findings by type
+gh issue list --label "finding,bug"
+gh issue list --label "finding,balance"
+
+# Full history (open + closed)
+gh issue list --label task --state all
+gh issue list --label finding --state all
+
+# View a specific issue
+gh issue view <number>
 ```
-findings/
-├── INDEX.md              ← status table (one row per finding)
-├── SESSIONS.md           ← append-only log of every skill session
-├── BUG-NNN-title.md
-├── BAL-NNN-title.md
-├── UX-NNN-title.md
-└── DESIGN-NNN-title.md
+
+### Labels
+
+**Type**: `task`, `finding`
+**Finding subtype**: `bug`, `balance`, `ux`, `design`
+**Skill assignment**: `skill:architect`, `skill:worldbuild`, `skill:balance`, `skill:designer`, `skill:playtest`, `skill:narrative`, `skill:art`
+**Priority**: `priority:high`, `priority:medium`, `priority:low`
+**Severity**: `severity:critical`, `severity:major`, `severity:minor`
+**Sprint**: `sprint:current`
+
+### Creating a new finding
+
+```bash
+gh issue create \
+  --title "[BUG-NNN] Short description" \
+  --label "finding,bug,severity:major" \
+  --body "## Observed\n...\n## Impact\n...\n## Fix\n..."
 ```
 
-**Frontmatter fields**: `id`, `type` (bug/balance/ux/design), `severity`
-(critical/major/minor/cosmetic), `status`, `session`, `found_by`
+Use `BUG-`, `BAL-`, `UX-`, or `DESIGN-` prefix in the title. Number sequentially from the last issue of that type.
 
-**Status flow**: `open` → `needs-verify` → `fixed` | `wont-fix`
+### Creating a new task
+
+```bash
+gh issue create \
+  --title "[TASK-NNN] Short description" \
+  --label "task,skill:architect,priority:medium" \
+  --body "## What\n...\n## Why\n...\n## Acceptance Criteria\n..."
+```
+
+### Closing a finding (fixed) or task (done)
+
+```bash
+gh issue close <number> --comment "Done. [brief note on what was done]"
+```
+
+### Adding to current sprint
+
+```bash
+gh issue edit <number> --add-label "sprint:current"
+```
 
 ---
 
-### tasks/ — Active work items
-Things that need to be built, written, or decided. Created by any skill or by Carlos.
-Assigned to a specific skill. Worked on and closed by that skill (or reassigned).
+## Session Log
 
-```
-tasks/
-├── INDEX.md              ← status table (one row per task)
-├── TASK-NNN-title.md
-└── ...
-```
+`findings/SESSIONS.md` — append-only log of every skill session. This stays local.
+Format: date, skill, tasks completed, key observations.
 
-**Frontmatter fields**: `id`, `assigned_to` (skill name), `priority`
-(high/medium/low), `status`, `created_by`, `created_date`
-
-**Status flow**: `open` → `in-progress` → `done` | `blocked` | `wont-do`
-
-**Body structure**:
-- What needs to be done
-- Why (which finding or design goal it addresses)
-- Acceptance criteria (how we know it's done)
+The individual `findings/BUG-NNN-*.md` and `tasks/TASK-NNN-*.md` files are historical
+artifacts — kept for reference but GitHub Issues are the source of truth.
 
 ---
 
 ## Typical Flows
 
 ### Bug found in playtest
-1. `playtest` creates `findings/BUG-NNN.md` (status: open)
-2. `playtest` or Carlos creates `tasks/TASK-NNN.md` assigned to `architect`
-3. `architect` works on it, updates task to `done`
-4. `playtest` runs again, verifies, updates finding to `fixed`
+1. `playtest` creates a GitHub Issue: `gh issue create --label "finding,bug,severity:major"`
+2. `playtest` or Carlos creates a task issue: `gh issue create --label "task,skill:architect,priority:high"`
+3. `architect` works on it, closes the task: `gh issue close <number>`
+4. `playtest` verifies, closes the finding: `gh issue close <number> --comment "Verified fixed."`
 
 ### Designer sets direction
-1. `designer` runs, reviews current state
-2. Creates `tasks/TASK-NNN.md` assigned to `worldbuild` ("add a third front")
-3. Creates `tasks/TASK-NNN.md` assigned to `architect` ("implement front chaining")
-4. Skills pick up tasks in subsequent sessions
+1. `designer` runs, checks open issues: `gh issue list --label finding`
+2. Creates task issues for follow-up skills
+3. Skills pick up tasks: `gh issue list --label "task,skill:worldbuild"`
 
 ### Worldbuild discovers a content gap
-1. `worldbuild` creates `findings/DESIGN-NNN.md` (status: open)
-2. Optionally creates a task for itself or designer to address it
+1. `worldbuild` creates a finding issue: `gh issue create --label "finding,design,severity:minor"`
+2. Optionally creates a task issue for itself or designer
 
 ---
 
-## Review Convention
+## Environment Notes (Sway/Wayland)
 
-## Environment Notes (nix-shell)
+The game requires `nix-shell shell.nix` to launch (X11 libs needed for Bevy).
 
-The game requires `nix-shell shell.nix` to launch (X11 libs).
-- **Keypresses**: `nix-shell -p xdotool` → `xdotool key F11` / `xdotool key F12`
-- **Screenshots (F12)**: Requires `scrot` — add to your nix-shell: `nix-shell -p scrot`
-  Bevy's built-in screenshot API produces black images in this X11 environment.
-- **State dump (F11)**: Always reliable, no extra tools needed.
+**The dev machine runs Sway (Wayland)**. Bevy launches as a native Wayland window.
+
+- **State dump (F11)**: Primary AI observation tool. Always reliable.
+  1. Start ydotool daemon: `nix-shell -p ydotool --run "ydotoold" &`
+  2. Focus game: `SWAYSOCK=/run/user/1000/sway-ipc.*.sock swaymsg '[title="Ashenveil"]' focus`
+  3. Send F11: `YDOTOOL_SOCKET=/run/user/1000/.ydotool_socket nix-shell -p ydotool --run "ydotool key 87:1 87:0"`
+
+- **Screenshots (F12)**: Currently broken on Wayland (BUG-002 / issue #2). `scrot` captures
+  XWayland (`:0`) which has no content from the Wayland-native Bevy window, but exits 0 so
+  the fallback is never reached. Fix pending (TASK-006 / issue #12).
+  **Workaround**: use `grim` if available: `grim screenshots/latest.png`
 
 ---
 
 ## Review Convention
 
 Carlos does periodic reviews. At review time:
-- Check `findings/INDEX.md` for anything needing attention
-- Check `tasks/INDEX.md` for blocked or stale items
-- Update status on anything that needs human judgment
+```bash
+gh issue list --label finding          # open findings
+gh issue list --label "sprint:current" # current sprint status
+```
 
-Skills should never mark something `wont-fix` or `wont-do` without a note explaining
-why — Carlos may disagree.
+Skills should never close a finding `wont-fix` or a task `wont-do` without a comment
+explaining why — Carlos may disagree.

@@ -1,17 +1,26 @@
 # Tasks Index
 
-| ID | Assigned To | Priority | Status | Title |
-|----|-------------|----------|--------|-------|
-| TASK-001 | architect | high | done | Implement rumor spread between co-located NPCs |
-| TASK-002 | designer | high | done | Decide on front pacing and lifecycle strategy |
-| TASK-003 | balance | low | open | Differentiate faction starting tension and front escalation targeting |
-| TASK-004 | worldbuild | medium | open | Add NPC presence to Market District |
-| TASK-005 | designer | low | done | Make a design decision on North Watchtower |
-| TASK-006 | architect | medium | open | Fix F12 screenshot producing black image (scrot fix fails on Wayland) |
-| TASK-007 | balance | high | open | Double all front countdown values in data.rs |
-| TASK-008 | architect | medium | done | Implement optional successor_front and front chaining logic |
-| TASK-009 | worldbuild | medium | open | Write successor front content for both existing fronts |
-| TASK-010 | worldbuild | low | open | Add Scout action definition to Watchtower location |
-| TASK-011 | architect | low | done | Implement Scout action logic at the Watchtower |
+> **Tasks are now tracked as GitHub Issues.**
+> https://github.com/cgracia/ttrpg/issues?q=label%3Atask
+>
+> Use `gh issue list --label task` to see open tasks.
+> Use `gh issue list --label task --state all` to see full history.
+>
+> To filter by skill: `gh issue list --label "task,skill:architect"`
+> To filter by sprint: `gh issue list --label "task,sprint:current"`
 
-## Status values: open · in-progress · done · blocked · wont-do
+## Issue Map
+
+| Local ID | GitHub Issue |
+|----------|-------------|
+| TASK-001 | #7 (closed) |
+| TASK-002 | #8 (closed) |
+| TASK-003 | #9 |
+| TASK-004 | #10 |
+| TASK-005 | #11 (closed) |
+| TASK-006 | #12 |
+| TASK-007 | #13 |
+| TASK-008 | #14 (closed) |
+| TASK-009 | #15 |
+| TASK-010 | #16 |
+| TASK-011 | #17 (closed) |

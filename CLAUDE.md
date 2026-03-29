@@ -108,11 +108,14 @@ src/
 
 ## Project Tracking
 
-- `WORKFLOW.md` — how skills collaborate, artifact conventions, review process
-- `findings/INDEX.md` — all open bugs, balance issues, UX and design findings
-- `tasks/INDEX.md` — active work items assigned to specific skills
+- `WORKFLOW.md` — how skills collaborate, artifact conventions, review process, `gh` CLI commands
+- GitHub Issues — tasks and findings tracked at https://github.com/cgracia/ttrpg/issues
+  - Open tasks: `gh issue list --label task`
+  - Open findings: `gh issue list --label finding`
+  - Current sprint: `gh issue list --label sprint:current`
+- `findings/SESSIONS.md` — append-only session history log (local)
 
-Read these when starting a session to understand current project state.
+Read WORKFLOW.md and check GitHub Issues when starting a session to understand current project state.
 
 ## Conventions
 
