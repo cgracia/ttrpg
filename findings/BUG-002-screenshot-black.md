@@ -2,7 +2,7 @@
 id: BUG-002
 type: bug
 severity: major
-status: open
+status: needs-verify
 session: 2026-03-29
 found_by: playtest
 ---

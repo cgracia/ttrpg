@@ -1,6 +1,7 @@
 /// NPC decision-making and movement each simulation tick.
 use bevy::prelude::*;
 use rand::Rng;
+use std::collections::HashMap;
 
 use crate::components::*;
 use crate::resources::{EventLog, TickEvent, WorldState, WorldTime};
@@ -146,11 +147,12 @@ pub fn faction_power_tick(
     }
 }
 
-/// Spread rumors: when an NPC with Knowledge is at the same location as another,
-/// they might share a rumor (only interesting ones).
+/// Spread rumors: when an NPC with Knowledge is co-located with another NPC,
+/// there's a chance each tick that one shares a rumor with the other.
+/// Credibility degrades slightly on each hop (partial information).
 pub fn spread_rumors(
     tick: Option<Res<TickEvent>>,
-    mut npcs: Query<(&ActorName, &AtLocation, &mut Knowledge), With<Npc>>,
+    mut npcs: Query<(Entity, &ActorName, &AtLocation, &mut Knowledge), With<Npc>>,
     time: Res<WorldTime>,
     mut log: ResMut<EventLog>,
 ) {
@@ -160,31 +162,67 @@ pub fn spread_rumors(
 
     let mut rng = rand::thread_rng();
 
-    // Collect all (entity, location, rumor snapshot)
-    let snapshot: Vec<(Entity, Entity, Vec<String>)> = npcs
-        .iter()
-        .map(|(_, at, know)| {
-            // We can't use entity() in iter() directly — use a workaround
-            (Entity::PLACEHOLDER, at.0, know.0.iter().map(|r| r.text.clone()).collect())
-        })
-        .collect();
+    // Phase 1: snapshot location → [(npc_entity, rumors)] (immutable pass)
+    let mut by_location: HashMap<Entity, Vec<(Entity, Vec<Rumor>)>> = HashMap::new();
+    for (entity, _name, at_loc, knowledge) in npcs.iter() {
+        by_location
+            .entry(at_loc.0)
+            .or_default()
+            .push((entity, knowledge.0.clone()));
+    }
 
-    // For each NPC pair at the same location, maybe share a rumor
-    let entities: Vec<Entity> = npcs.iter().map(|(_, at, _)| at.0).collect();
-    let _ = (snapshot, entities);
+    // Phase 2: for each location with 2+ NPCs, attempt a rumor transfer (mutable pass)
+    for (_loc, present) in &by_location {
+        if present.len() < 2 {
+            continue;
+        }
+        // 30% chance of any exchange at this location this tick
+        if !rng.gen_bool(0.30) {
+            continue;
+        }
 
-    // Simplified: 15% chance each tick that some NPC "hears something" and we log it
-    if rng.gen_bool(0.15) {
-        let rumors = [
-            "Someone overheard Aldric Voss talking about 'the next phase.'",
-            "A cloaked figure was seen entering the back alleys after midnight.",
-            "Tomas Reed looks like he hasn't slept in days.",
-            "The dockmaster's ledger has been tampered with.",
-            "Brega Halm was seen arguing with a Guild enforcer.",
-            "Finn Crowe is offering information — for a price.",
-            "Canon Thess held a secret meeting at the temple.",
-        ];
-        let rumor = rumors[rng.gen_range(0..rumors.len())];
-        log.push_at(time.turn, format!("(Rumor) {}", rumor));
+        // Pick a donor: must have at least one rumor
+        let donor_indices: Vec<usize> = present
+            .iter()
+            .enumerate()
+            .filter(|(_, (_, rumors))| !rumors.is_empty())
+            .map(|(i, _)| i)
+            .collect();
+        if donor_indices.is_empty() {
+            continue;
+        }
+        let di = donor_indices[rng.gen_range(0..donor_indices.len())];
+        let (donor_entity, donor_rumors) = &present[di];
+
+        // Pick a random different NPC as recipient
+        let other: Vec<usize> = (0..present.len()).filter(|&i| i != di).collect();
+        let ri = other[rng.gen_range(0..other.len())];
+        let (recipient_entity, recipient_rumors) = &present[ri];
+
+        // Find a rumor the recipient doesn't already have
+        let novel: Vec<&Rumor> = donor_rumors
+            .iter()
+            .filter(|dr| !recipient_rumors.iter().any(|rr| rr.text == dr.text))
+            .collect();
+        if novel.is_empty() {
+            continue;
+        }
+
+        let picked = novel[rng.gen_range(0..novel.len())];
+        let spread = Rumor {
+            text: picked.text.clone(),
+            // Credibility degrades 15% on each hop — rumors get less reliable as they travel
+            credibility: ((picked.credibility as u32 * 85) / 100).max(10) as u8,
+            turn_learned: time.turn,
+        };
+
+        if let Ok((_, name, _, mut knowledge)) = npcs.get_mut(*recipient_entity) {
+            knowledge.0.push(spread);
+            // Log sparsely so it doesn't flood — player won't always know who heard what
+            if rng.gen_bool(0.25) {
+                log.push_at(time.turn, format!("{} picks up a rumor.", name.0));
+            }
+        }
+        let _ = donor_entity; // used in snapshot, not needed here
     }
 }

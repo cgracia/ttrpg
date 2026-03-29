@@ -8,6 +8,8 @@ use crate::components::*;
 use crate::resources::*;
 
 /// Press F12 to save a screenshot to `screenshots/latest.png`.
+/// Tries external capture tools first (more reliable in X11/nix-shell environments),
+/// then falls back to Bevy's built-in screenshot API.
 pub fn screenshot_on_f12(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
@@ -20,15 +22,30 @@ pub fn screenshot_on_f12(
 
     let dir = "screenshots";
     std::fs::create_dir_all(dir).ok();
+    let path = format!("{dir}/latest.png");
 
-    commands
-        .spawn(Screenshot::primary_window())
-        .observe(save_to_disk(format!("{dir}/latest.png")));
+    // Try scrot first — reliable in X11 environments where Bevy captures a black frame
+    let captured_externally = std::process::Command::new("scrot")
+        .args(["-d", "0", "--overwrite", &path])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
 
-    event_log.push_at(
-        time.turn,
-        "Debug: screenshot requested -> screenshots/latest.png".into(),
-    );
+    if captured_externally {
+        event_log.push_at(
+            time.turn,
+            "Debug: screenshot saved (scrot) -> screenshots/latest.png".into(),
+        );
+    } else {
+        // Fall back to Bevy's screenshot API (may produce black image in some environments)
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        event_log.push_at(
+            time.turn,
+            "Debug: screenshot requested (Bevy API) -> screenshots/latest.png".into(),
+        );
+    }
 }
 
 /// Press F11 to dump world state to `debug/world_state.txt`.

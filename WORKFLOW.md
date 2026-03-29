@@ -91,6 +91,18 @@ tasks/
 
 ## Review Convention
 
+## Environment Notes (nix-shell)
+
+The game requires `nix-shell shell.nix` to launch (X11 libs).
+- **Keypresses**: `nix-shell -p xdotool` → `xdotool key F11` / `xdotool key F12`
+- **Screenshots (F12)**: Requires `scrot` — add to your nix-shell: `nix-shell -p scrot`
+  Bevy's built-in screenshot API produces black images in this X11 environment.
+- **State dump (F11)**: Always reliable, no extra tools needed.
+
+---
+
+## Review Convention
+
 Carlos does periodic reviews. At review time:
 - Check `findings/INDEX.md` for anything needing attention
 - Check `tasks/INDEX.md` for blocked or stale items

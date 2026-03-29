@@ -38,6 +38,9 @@ pub struct NpcTemplate {
     pub wealth: i32,
     pub routine: String,
     pub patrol: Vec<String>,
+    /// Rumors this NPC knows at world start. Empty = no starting knowledge.
+    #[serde(default)]
+    pub starter_rumors: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -157,6 +160,17 @@ pub fn spawn_world(
             _ => NpcRoutine::SeekGoal,
         };
 
+        let starting_knowledge = Knowledge(
+            nt.starter_rumors
+                .iter()
+                .map(|text| Rumor {
+                    text: text.clone(),
+                    credibility: 80,
+                    turn_learned: 0,
+                })
+                .collect(),
+        );
+
         let mut entity_cmd = commands.spawn((
             Npc,
             ActorName(nt.name.clone()),
@@ -170,7 +184,7 @@ pub fn spawn_world(
             Traits(traits),
             Goals(goals),
             Relationships::default(),
-            Knowledge::default(),
+            starting_knowledge,
             AtLocation(location_entity),
             Wealth(nt.wealth),
             NpcBehavior { routine, move_cooldown: 0 },
@@ -362,6 +376,7 @@ pub fn build_world_data() -> WorldData {
                 wealth: 200,
                 routine: "stay".into(),
                 patrol: vec![],
+                starter_rumors: vec![],
             },
             NpcTemplate {
                 id: "mira".into(),
@@ -375,6 +390,7 @@ pub fn build_world_data() -> WorldData {
                 wealth: 80,
                 routine: "patrol".into(),
                 patrol: vec!["market".into(), "guild_hall".into(), "docks".into()],
+                starter_rumors: vec![],
             },
             NpcTemplate {
                 id: "canon_thess".into(),
@@ -388,6 +404,7 @@ pub fn build_world_data() -> WorldData {
                 wealth: 15,
                 routine: "patrol".into(),
                 patrol: vec!["temple".into(), "town_square".into()],
+                starter_rumors: vec![],
             },
             NpcTemplate {
                 id: "brega".into(),
@@ -401,6 +418,7 @@ pub fn build_world_data() -> WorldData {
                 wealth: 10,
                 routine: "patrol".into(),
                 patrol: vec!["town_square".into(), "temple".into(), "watchtower".into()],
+                starter_rumors: vec![],
             },
             NpcTemplate {
                 id: "sable".into(),
@@ -414,6 +432,7 @@ pub fn build_world_data() -> WorldData {
                 wealth: 120,
                 routine: "stay".into(),
                 patrol: vec![],
+                starter_rumors: vec![],
             },
             NpcTemplate {
                 id: "finn".into(),
@@ -427,6 +446,10 @@ pub fn build_world_data() -> WorldData {
                 wealth: 30,
                 routine: "patrol".into(),
                 patrol: vec!["tavern".into(), "back_alley".into(), "docks".into(), "market".into()],
+                starter_rumors: vec![
+                    "The Guild is buying up dock leases. Lena's been paid to look the other way.".into(),
+                    "Sable has eyes on someone new in town. Asking questions gets people hurt.".into(),
+                ],
             },
             NpcTemplate {
                 id: "lena".into(),
@@ -440,6 +463,9 @@ pub fn build_world_data() -> WorldData {
                 wealth: 60,
                 routine: "stay".into(),
                 patrol: vec![],
+                starter_rumors: vec![
+                    "Three barges arrived last week with manifests that don't match their cargo. Guild business.".into(),
+                ],
             },
             NpcTemplate {
                 id: "otto".into(),
@@ -453,6 +479,10 @@ pub fn build_world_data() -> WorldData {
                 wealth: 40,
                 routine: "stay".into(),
                 patrol: vec![],
+                starter_rumors: vec![
+                    "Miners who went to look at the old shaft never came back. Four of them. Nobody talks about it.".into(),
+                    "The Order's been losing tithing money. Canon Thess covers for it but the books don't lie.".into(),
+                ],
             },
             NpcTemplate {
                 id: "vex".into(),
@@ -466,6 +496,9 @@ pub fn build_world_data() -> WorldData {
                 wealth: 25,
                 routine: "patrol".into(),
                 patrol: vec!["tavern".into(), "town_square".into(), "docks".into()],
+                starter_rumors: vec![
+                    "Something was found in the mine collapse. Not ore. The Guild sealed it off immediately.".into(),
+                ],
             },
             NpcTemplate {
                 id: "tomas".into(),
@@ -479,6 +512,9 @@ pub fn build_world_data() -> WorldData {
                 wealth: 12,
                 routine: "patrol".into(),
                 patrol: vec!["guild_hall".into(), "town_square".into(), "tavern".into()],
+                starter_rumors: vec![
+                    "Aldric authorized a payment to someone outside the Guild. The ledger entry was altered the next day.".into(),
+                ],
             },
         ],
         fronts: vec![

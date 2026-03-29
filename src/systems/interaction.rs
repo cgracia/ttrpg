@@ -1,5 +1,6 @@
 /// Player interaction with NPCs and the travel system.
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::components::*;
 use crate::resources::*;
@@ -123,15 +124,23 @@ pub fn execute_player_action(
         PlayerAction::AskRumor => {
             if let Some(npc_entity) = interaction.selected_npc {
                 if let Ok((npc_name, knowledge, goals, traits, wealth)) = npc_query.get(npc_entity) {
-                    let rumor = generate_rumor(npc_name, goals, traits, wealth);
-                    log.push_at(time.turn, format!("{} says: \"{}\"", npc_name.0, rumor));
-                    interaction.dialogue_lines.push(format!("\"{}\"", rumor));
+                    // Prefer a rumor the NPC actually knows; fall back to trait-based generation
+                    let (rumor_text, credibility) = if !knowledge.0.is_empty() {
+                        let mut rng = rand::thread_rng();
+                        let r = &knowledge.0[rng.gen_range(0..knowledge.0.len())];
+                        (r.text.clone(), r.credibility)
+                    } else {
+                        (generate_rumor(npc_name, goals, traits, wealth), 60u8)
+                    };
+
+                    log.push_at(time.turn, format!("{} says: \"{}\"", npc_name.0, rumor_text));
+                    interaction.dialogue_lines.push(format!("\"{}\"", rumor_text));
 
                     // Player learns the rumor
                     if let Ok((_, mut player_know)) = player_query.single_mut() {
                         player_know.0.push(crate::components::Rumor {
-                            text: rumor,
-                            credibility: 60,
+                            text: rumor_text,
+                            credibility,
                             turn_learned: time.turn,
                         });
                     }
