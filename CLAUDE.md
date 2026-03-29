@@ -106,6 +106,14 @@ src/
     └── debug.rs     — Screenshot and state dump systems
 ```
 
+## Project Tracking
+
+- `WORKFLOW.md` — how skills collaborate, artifact conventions, review process
+- `findings/INDEX.md` — all open bugs, balance issues, UX and design findings
+- `tasks/INDEX.md` — active work items assigned to specific skills
+
+Read these when starting a session to understand current project state.
+
 ## Conventions
 
 - Keep systems small and focused — one responsibility per system function
