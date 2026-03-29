@@ -2,7 +2,7 @@
 id: TASK-005
 assigned_to: designer
 priority: low
-status: open
+status: done
 created_by: planner
 created_date: 2026-03-29
 related_finding: DESIGN-001
@@ -10,24 +10,32 @@ related_finding: DESIGN-001
 
 # Make a design decision on North Watchtower
 
-## What
-Decide intentionally what the North Watchtower is for. Three options on the table:
+## Decision (2026-03-29)
 
-1. **Add a second connection** (e.g. Market District or a road-exit stub) — makes it
-   a waypoint rather than a dead end
-2. **Add a unique action** (scout nearby locations, spot traveling NPCs, see front
-   progress) — gives a mechanical reason to visit
-3. **Lean into the dead-end** — Watchtower is Brega's deliberate isolation. Document
-   this as intent in VISION.md or the location description.
+**Keep the dead-end topology. Add a unique "Scout" action.**
+
+The Watchtower's isolation is intentional — Brega Halm of the Order of Accord watches
+from a distance, doesn't mix. The single connection communicates her separateness.
+Do NOT add a second connection; it would dilute what the topology is saying.
+
+**Scout action spec:**
+- Available only at the Watchtower
+- Costs one turn (travel there + action + travel back = real commitment)
+- Reveals current location of 1-2 NPCs who are in outdoor/transit locations
+- Does NOT reveal what they're doing or who they're with — just *where*
+- Serves players who are tracking someone, planning an intercept, or unsure who is where
+
+This hits the partial information pillar: you can see *where*, not *what*. It makes the
+round trip a deliberate tradeoff worth considering, not a waste.
+
+**What was NOT chosen:**
+- Second connection to Market District: smooths over topology that communicates intent
+- Full front-progress visibility: too much information, breaks partial-info pillar
+
+## Follow-up Tasks Created
+- TASK-010 (worldbuild): Add Scout action to Watchtower location definition
+- TASK-011 (architect): Implement Scout action logic (reveals outdoor NPC locations)
 
 ## Why
-Currently it connects only to Town Square and has no distinct mechanical value.
-This isn't necessarily a problem — a deliberate narrative dead-end is a valid design
-choice — but it needs to be decided intentionally, not by accident.
-
-See DESIGN-001 for full context.
-
-## Acceptance Criteria
-- A clear decision is made and documented (in VISION.md or a finding update)
-- If structural change: worldbuild or architect has a follow-up task
-- If intentional dead-end: DESIGN-001 is closed as `wont-fix` with a note
+Without a mechanical hook, the Watchtower has no pull. The round trip from Town Square
+is a real cost that needs a real payoff.
