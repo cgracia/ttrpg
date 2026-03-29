@@ -23,6 +23,8 @@ pub struct FactionTemplate {
     pub name: String,
     pub description: String,
     pub starting_power: i32,
+    #[serde(default)]
+    pub starting_tension: i32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -67,6 +69,9 @@ pub struct FrontStageTemplate {
     pub description: String,
     pub event_log_entry: String,
     pub countdown_turns: u32,
+    /// (faction_id, tension_delta) — which factions get tension when this stage is entered.
+    #[serde(default)]
+    pub tension_targets: Vec<(String, i32)>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -95,7 +100,7 @@ pub fn spawn_world(
                 ActorName(ft.name.clone()),
                 Description(ft.description.clone()),
                 FactionPower(ft.starting_power),
-                FactionTension(0),
+                FactionTension(ft.starting_tension),
             ))
             .id();
         faction_map.insert(ft.id.clone(), e);
@@ -203,7 +208,13 @@ pub fn spawn_world(
             .push((nt.id.clone(), nt.name.clone(), npc_entity));
     }
 
-    // Spawn fronts
+    // Spawn fronts — successors start inactive until their predecessor resolves
+    let successor_names: std::collections::HashSet<String> = world_data
+        .fronts
+        .iter()
+        .filter_map(|ft| ft.successor_front.clone())
+        .collect();
+
     for ft in &world_data.fronts {
         let stages: Vec<FrontStage> = ft
             .stages
@@ -212,8 +223,11 @@ pub fn spawn_world(
                 description: s.description.clone(),
                 event_log_entry: s.event_log_entry.clone(),
                 countdown_turns: s.countdown_turns,
+                tension_targets: s.tension_targets.clone(),
             })
             .collect();
+
+        let is_successor = successor_names.contains(&ft.name);
 
         commands.spawn((
             Front {
@@ -221,7 +235,7 @@ pub fn spawn_world(
                 description: ft.description.clone(),
                 stage: 0,
                 countdown: ft.starting_countdown,
-                active: true,
+                active: !is_successor,
                 starting_countdown: ft.starting_countdown,
                 successor_front: ft.successor_front.clone(),
             },
@@ -354,18 +368,21 @@ pub fn build_world_data() -> WorldData {
                 name: "Merchant Guild".into(),
                 description: "Controls trade and credit in Ashenveil. Ruthlessly pragmatic.".into(),
                 starting_power: 65,
+                starting_tension: 30,
             },
             FactionTemplate {
                 id: "order".into(),
                 name: "Order of Accord".into(),
                 description: "Peacekeepers and mediators. Losing influence as tensions rise.".into(),
                 starting_power: 40,
+                starting_tension: 15,
             },
             FactionTemplate {
                 id: "shadows".into(),
                 name: "The Shadows".into(),
                 description: "A criminal network operating through intimidation and blackmail.".into(),
                 starting_power: 45,
+                starting_tension: 55,
             },
         ],
         npcs: vec![
@@ -526,56 +543,165 @@ pub fn build_world_data() -> WorldData {
             FrontTemplate {
                 name: "The Guild's Gambit".into(),
                 description: "The Merchant Guild is executing a slow takeover of Ashenveil's docks and supply chains, squeezing out the Order and the Shadows.".into(),
-                starting_countdown: 4,
-                successor_front: None, // TODO TASK-009: worldbuild to wire successor
+                starting_countdown: 8,
+                successor_front: Some("The Iron Ledger".into()),
                 stages: vec![
                     FrontStageTemplate {
                         description: "The Guild begins buying up dock leases.".into(),
                         event_log_entry: "Dock workers report that the Guild has purchased two more berth leases. Lena Marsh looks nervous.".into(),
-                        countdown_turns: 5,
+                        countdown_turns: 10,
+                        tension_targets: vec![],
                     },
                     FrontStageTemplate {
                         description: "Guild enforcers appear in the market. Prices spike.".into(),
                         event_log_entry: "Armed Guild agents are now stationed in the market. Merchants who refuse protection are 'having accidents.'".into(),
-                        countdown_turns: 5,
+                        countdown_turns: 10,
+                        tension_targets: vec![
+                            ("guild".into(), 10),
+                            ("shadows".into(), 10),
+                            ("order".into(), 5),
+                        ],
                     },
                     FrontStageTemplate {
                         description: "The Shadows retaliate. A Guild warehouse burns.".into(),
                         event_log_entry: "A fire broke out at the Guild's riverside warehouse last night. The Shadows are suspected. Aldric Voss is furious.".into(),
-                        countdown_turns: 4,
+                        countdown_turns: 10,
+                        tension_targets: vec![
+                            ("guild".into(), 10),
+                            ("shadows".into(), 10),
+                            ("order".into(), 5),
+                        ],
                     },
                     FrontStageTemplate {
                         description: "Open conflict erupts. The Order tries to intervene.".into(),
                         event_log_entry: "Street fighting between Guild agents and Shadow operatives. Canon Thess attempts mediation and is ignored by both sides.".into(),
-                        countdown_turns: 4,
+                        countdown_turns: 8,
+                        tension_targets: vec![
+                            ("guild".into(), 10),
+                            ("shadows".into(), 10),
+                            ("order".into(), 10),
+                        ],
                     },
                     FrontStageTemplate {
                         description: "One side collapses or a fragile truce is struck.".into(),
                         event_log_entry: "The conflict reaches a breaking point. Ashenveil will never be the same.".into(),
                         countdown_turns: 0,
+                        tension_targets: vec![
+                            ("guild".into(), 15),
+                            ("shadows".into(), 15),
+                            ("order".into(), 5),
+                        ],
                     },
                 ],
             },
             FrontTemplate {
                 name: "Whispers from the Mine".into(),
                 description: "Something was discovered in the old collapsed mine east of town. People are starting to disappear.".into(),
-                starting_countdown: 7,
-                successor_front: None, // TODO TASK-009: worldbuild to wire successor
+                starting_countdown: 14,
+                successor_front: Some("What the Mine Swallowed".into()),
                 stages: vec![
                     FrontStageTemplate {
                         description: "Rumors of strange lights near the mine.".into(),
                         event_log_entry: "Miners at the tavern whisper about strange lights seen at the old collapsed mine. Three men who went to investigate haven't returned.".into(),
-                        countdown_turns: 6,
+                        countdown_turns: 12,
+                        tension_targets: vec![],
                     },
                     FrontStageTemplate {
                         description: "A body is found with no explanation.".into(),
                         event_log_entry: "A body was recovered from the river — a miner who'd been asking about the mine. No apparent cause of death.".into(),
-                        countdown_turns: 5,
+                        countdown_turns: 12,
+                        tension_targets: vec![
+                            ("guild".into(), 5),
+                            ("order".into(), 5),
+                            ("shadows".into(), 5),
+                        ],
                     },
                     FrontStageTemplate {
                         description: "Vex is connected to the mine. Someone wants them silenced.".into(),
                         event_log_entry: "Vex narrowly escapes an ambush in the back alleys. They carry documents no one should have.".into(),
                         countdown_turns: 0,
+                        tension_targets: vec![
+                            ("guild".into(), 5),
+                            ("order".into(), 5),
+                            ("shadows".into(), 10),
+                        ],
+                    },
+                ],
+            },
+            // ── Successor fronts ─────────────────────────────────────────────
+            FrontTemplate {
+                name: "The Iron Ledger".into(),
+                description: "With the Shadows broken and the Order sidelined, Aldric Voss monetizes his victory. Ashenveil learns what Guild dominance actually looks like from the inside.".into(),
+                starting_countdown: 10,
+                successor_front: None,
+                stages: vec![
+                    FrontStageTemplate {
+                        description: "Guild auditors descend on every merchant, stall-holder, and dockworker. The fees they call 'assessments' are tribute by another name.".into(),
+                        event_log_entry: "Guild accountants have arrived at every market stall and dock berth. Several stall-holders who couldn't pay the 'assessment fee' have simply closed. Some vanished overnight.".into(),
+                        countdown_turns: 10,
+                        tension_targets: vec![
+                            ("guild".into(), 5),
+                            ("order".into(), 5),
+                            ("shadows".into(), 10),
+                        ],
+                    },
+                    FrontStageTemplate {
+                        description: "Mira Dent takes formal control of the docks. Lena Marsh is removed. The Guild now owns every cargo that enters Ashenveil.".into(),
+                        event_log_entry: "Mira Dent has moved into the Dockmaster's office. Lena Marsh was seen leaving with a single bag. All incoming cargo now requires Guild inspection and levy.".into(),
+                        countdown_turns: 8,
+                        tension_targets: vec![
+                            ("guild".into(), 10),
+                            ("order".into(), 10),
+                            ("shadows".into(), 10),
+                        ],
+                    },
+                    FrontStageTemplate {
+                        description: "Canon Thess posts proclamations calling for a public reckoning. The town is forced to choose a side or submit.".into(),
+                        event_log_entry: "Canon Thess has nailed proclamations to every notice board: 'The Accord demands an answer. Who do you serve?' The Guild's response is swift and unmistakable.".into(),
+                        countdown_turns: 0,
+                        tension_targets: vec![
+                            ("guild".into(), 15),
+                            ("order".into(), 5),
+                            ("shadows".into(), 5),
+                        ],
+                    },
+                ],
+            },
+            FrontTemplate {
+                name: "What the Mine Swallowed".into(),
+                description: "Vex escaped with documents that tell a story the Guild desperately needs buried. The secret from the mine is now loose — and someone will pay the price for that.".into(),
+                starting_countdown: 10,
+                successor_front: None,
+                stages: vec![
+                    FrontStageTemplate {
+                        description: "The documents reach Canon Thess at the Temple. Whatever they contain changes her. Brega emerges looking like she's seen a body.".into(),
+                        event_log_entry: "A sealed letter was delivered to the Temple of Accord. Canon Thess has not been seen in two days. When Brega emerged from the temple, her expression had changed.".into(),
+                        countdown_turns: 12,
+                        tension_targets: vec![
+                            ("order".into(), 10),
+                            ("guild".into(), 10),
+                            ("shadows".into(), 5),
+                        ],
+                    },
+                    FrontStageTemplate {
+                        description: "Aldric moves to silence Vex. Someone with considerable resources is hunting them through the alleys and docks.".into(),
+                        event_log_entry: "Vex has vanished from their usual haunts. Finn Crowe is asking questions about them — but Finn doesn't ask for free. Someone is paying well.".into(),
+                        countdown_turns: 10,
+                        tension_targets: vec![
+                            ("guild".into(), 10),
+                            ("shadows".into(), 10),
+                            ("order".into(), 5),
+                        ],
+                    },
+                    FrontStageTemplate {
+                        description: "The mine's secret reaches its conclusion. The truth surfaces publicly, or it is buried so deep it might as well not exist.".into(),
+                        event_log_entry: "The mine's secret reaches its end. Some things, once known, cannot be made unknown. Others are buried deep enough that they might as well not exist.".into(),
+                        countdown_turns: 0,
+                        tension_targets: vec![
+                            ("guild".into(), 10),
+                            ("order".into(), 10),
+                            ("shadows".into(), 10),
+                        ],
                     },
                 ],
             },

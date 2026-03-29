@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 
 use crate::components::{Front, FrontStages, FactionMarker, FactionPower, FactionTension};
-use crate::resources::{EventLog, TickEvent, WorldTime};
+use crate::resources::{EventLog, TickEvent, WorldState, WorldTime};
 
 pub fn advance_fronts(
     tick: Option<Res<TickEvent>>,
@@ -10,6 +10,7 @@ pub fn advance_fronts(
     mut factions: Query<(&mut FactionPower, &mut FactionTension), With<FactionMarker>>,
     mut log: ResMut<EventLog>,
     time: Res<WorldTime>,
+    world: Res<WorldState>,
 ) {
     if tick.is_none() {
         return;
@@ -46,9 +47,14 @@ pub fn advance_fronts(
 
             log.push_at(time.turn, stage.event_log_entry.clone());
 
-            // Front escalation raises faction tension
-            for (_power, mut tension) in factions.iter_mut() {
-                tension.0 = (tension.0 + 10).min(100);
+            // Front escalation raises tension for targeted factions
+            let targets = stage.tension_targets.clone();
+            for (faction_id, delta) in &targets {
+                if let Some(faction_entity) = world.faction_entity(faction_id) {
+                    if let Ok((_power, mut tension)) = factions.get_mut(faction_entity) {
+                        tension.0 = (tension.0 + delta).clamp(0, 100);
+                    }
+                }
             }
         } else {
             front.countdown -= 1;

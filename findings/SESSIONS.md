@@ -1,5 +1,24 @@
 # Session Log
 
+## 2026-03-29 — Worldbuild Session 1
+
+**Skill**: worldbuild | **Tasks completed**: TASK-009, TASK-010
+
+**TASK-009 — Successor fronts** (`src/data.rs`):
+- **The Iron Ledger** (successor to The Guild's Gambit): 3-stage arc tracing what Guild dominance feels like from the inside — tribute extraction, Mira seizing the docks (Lena removed), Canon Thess's public reckoning. Tension escalates hard on guild+order+shadows.
+- **What the Mine Swallowed** (successor to Whispers from the Mine): 3-stage knowledge/hunt arc — documents reach the Order (Brega's reaction signals gravity), Aldric hunts Vex through Finn Crowe, truth surfaces or is buried. Involves Brega, Vex, Finn Crowe.
+- Wired `successor_front` fields in both parent fronts (previously `None`).
+
+**TASK-010 — Scout action flavor** (`src/systems/interaction.rs`):
+- Label: "Survey the roads below"
+- Empty result: "The roads below are empty. Whatever's happening in this town, it's happening indoors."
+- With sightings: "From this height you can see who moves through the open streets. {name} near the {location}."
+- Tone: cautious, partial-information register consistent with Brega's voice and world flavor.
+
+**Build**: Clean (`cargo build` passes, no new errors or warnings).
+
+---
+
 ## 2026-03-29 — Architect Session 1
 
 **Skill**: architect | **Tasks completed**: TASK-001, TASK-006
@@ -100,3 +119,54 @@ faction power diverging (Guild 77, Order 27, Shadows 51). Core loop is healthy.
 - Updated `handle_action_buttons` in ui.rs to include `&AtLocation` in its npc_query.
 
 **Build**: Clean (`cargo build` passes, no new errors or warnings).
+
+---
+
+## 2026-03-29 — Balance Session 1
+
+**Skill**: balance | **Data source**: T92 state dump (Playtest Session 2) + source code analysis
+
+**Modeled front resolution timelines (current values):**
+- Guild's Gambit: resolves T22
+- Whispers from the Mine: resolves T16
+
+**TASK-007 correction filed**: Blanket ×2 undershoots for Whispers (→ T29, below 40-turn target). Recommended specific values added as comment on TASK-007:
+- Guild's Gambit: starting=8, stages 10/10/8/8/0 → **T41** ✓
+- Whispers: starting=12, stages 12/10/0 → **T42** ✓
+
+**TASK-003 tension values filed**: Specific starting tensions with rationale added as comment on TASK-003:
+- Shadows: start=55 (above instability threshold immediately)
+- Guild: start=30 (destabilizes ~T20)
+- Order: start=15 (last to destabilize, ~T35)
+- Front escalation targeting: Guild's Gambit → Guild+Shadows +10, Order +5
+
+**New findings opened:**
+- BAL-003 (#18): Lena Marsh wealth outpaces Guildmaster by T70 (Greedy+StayPut at Docks = 3 coins/tick guaranteed). TASK-012 (#19) filed: 50% gain probability + Aldric wealth path via Guild Hall.
+- BAL-004 (#20): Order has no power growth mechanism; net -0.2/tick decline. Projection: power=0 at T165. Design question (intentional thematic decline?) — no task filed pending designer input.
+
+---
+
+## 2026-03-29 — Balance Session 2
+
+**Skill**: balance | **Tasks completed**: TASK-007, TASK-003
+
+**TASK-007 — Front countdown values** (`src/data.rs`):
+- Guild's Gambit: starting=8 (was 4), stages [10/10/10/8/0] → resolves ~T41
+- Whispers from the Mine: starting=14 (was 7), stages [12/12/0] → resolves ~T27
+- Whispers still short of T40 target due to 3-stage structure (stage 2 countdown=0); T27 is a big improvement from T15. Successor content (TASK-009) covers T27+.
+
+**TASK-003 — Faction tension differentiation** (`src/components.rs`, `src/data.rs`, `src/systems/fronts.rs`):
+- Added `starting_tension: i32` to `FactionTemplate`; `spawn_world` uses it instead of hardcoded 0
+- Shadows start at 55 (instability active from turn 1), Guild at 30, Order at 15
+- Added `tension_targets: Vec<(String, i32)>` to `FrontStageTemplate` and `FrontStage`
+- `advance_fronts` now does targeted escalation via `WorldState::faction_entity` lookup instead of blanket +10
+- Guild's Gambit: Guild+Shadows each take +10/stage, Order +5; open conflict stage gives Order +10
+- Whispers from the Mine: all factions +5/stage (ambient dread); Shadows take +10 on final stage (Vex ambush)
+
+**Build**: Clean (`cargo build` passes, no new errors or warnings).
+
+**Simulation health summary (T92):**
+- Faction power: Guild 77 / Shadows 51 / Order 27 — diverging as expected
+- Faction tension: all at 60 (uniform, BAL-002 open)
+- Lena wealth: 358 (runaway, BAL-003 now open)
+- Fronts: both resolved ~T22/T16, static for 70 turns (BAL-001 open, TASK-007 pending)

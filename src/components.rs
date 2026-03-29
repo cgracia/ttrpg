@@ -192,6 +192,9 @@ pub struct FrontStage {
     pub description: String,
     pub event_log_entry: String,
     pub countdown_turns: u32,
+    /// (faction_id, tension_delta) — which factions get tension when this stage is entered.
+    /// Empty = no escalation.
+    pub tension_targets: Vec<(String, i32)>,
 }
 
 // ── UI state components ───────────────────────────────────────────────────────

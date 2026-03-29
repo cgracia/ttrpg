@@ -104,7 +104,7 @@ pub fn build_travel_options(
         // Location-specific actions
         if world.location_entity("watchtower") == Some(at.0) {
             interaction.options.push(InteractionOption {
-                label: "Scout the roads below".into(),
+                label: "Survey the roads below".into(),
                 action: PlayerAction::Scout,
             });
         }
@@ -207,14 +207,17 @@ pub fn execute_player_action(
                 .take(3)
                 .map(|(name, _, _, _, _, at)| {
                     let loc = world.location_name(at.0).unwrap_or("somewhere");
-                    format!("{} near {}", name.0, loc)
+                    format!("{} near the {}", name.0, loc)
                 })
                 .collect();
 
             let msg = if sightings.is_empty() {
-                "The streets are quiet. No one moves through the open roads.".to_string()
+                "The roads below are empty. Whatever's happening in this town, it's happening indoors.".to_string()
             } else {
-                format!("From above, you can see: {}.", sightings.join(", "))
+                format!(
+                    "From this height you can see who moves through the open streets. {}.",
+                    sightings.join(". ")
+                )
             };
 
             log.push_at(time.turn, msg.clone());
