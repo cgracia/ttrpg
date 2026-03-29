@@ -73,3 +73,30 @@ but organic presence observed — severity may be lower than originally assessed
 
 **Simulation health**: NPC movement active, wealth diverging (Lena Marsh 358, Brega 10),
 faction power diverging (Guild 77, Order 27, Shadows 51). Core loop is healthy.
+
+---
+
+## 2026-03-29 — Architect Session 2
+
+**Skill**: architect | **Tasks completed**: TASK-008, TASK-011
+
+**TASK-008 — Front chaining** (`src/components.rs`, `src/data.rs`, `src/systems/fronts.rs`):
+- Added `starting_countdown: u32` and `successor_front: Option<String>` to `Front` component.
+- Added `successor_front: Option<String>` (`#[serde(default)]`) to `FrontTemplate`.
+- Updated `spawn_world` to pass both fields when spawning front entities.
+- Updated `advance_fronts`: when a front resolves, collects successor names into a Vec,
+  then does a second `iter_mut()` pass to activate them (avoids double-borrow). Activating
+  a successor sets `active=true`, resets `stage=0`, restores `countdown=starting_countdown`,
+  and logs an event. Both current fronts have `successor_front: None` pending TASK-009
+  (worldbuild) wiring the names in.
+
+**TASK-011 — Scout action** (`src/resources.rs`, `src/systems/interaction.rs`, `src/ui.rs`):
+- Added `PlayerAction::Scout` variant.
+- `build_travel_options` now takes `world: Res<WorldState>`; when player is at Watchtower
+  location, injects a "Scout the roads below" option into the travel panel.
+- `execute_player_action`: added `&AtLocation` to `npc_query` tuple; implemented Scout
+  handler using hardcoded outdoor location list (option b — no LocationTemplate changes).
+  Reveals up to 3 NPCs in outdoor locations; falls back to "streets are quiet" if none.
+- Updated `handle_action_buttons` in ui.rs to include `&AtLocation` in its npc_query.
+
+**Build**: Clean (`cargo build` passes, no new errors or warnings).

@@ -180,6 +180,8 @@ pub struct Front {
     pub stage: u8,        // 0–4, escalating stages
     pub countdown: u32,   // turns until next stage
     pub active: bool,
+    pub starting_countdown: u32,
+    pub successor_front: Option<String>,
 }
 
 #[derive(Component, Clone, Debug, Default)]

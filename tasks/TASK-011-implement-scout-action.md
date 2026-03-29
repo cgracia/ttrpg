@@ -2,7 +2,7 @@
 id: TASK-011
 assigned_to: architect
 priority: low
-status: open
+status: done
 created_by: designer
 created_date: 2026-03-29
 related_finding: DESIGN-001

@@ -473,7 +473,7 @@ pub fn handle_action_buttons(
     mut interaction_state: ResMut<InteractionState>,
     mut player_query: Query<(&mut AtLocation, &mut Knowledge), (With<Player>, Without<Npc>)>,
     npc_query:
-        Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth), (With<Npc>, Without<Player>)>,
+        Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth, &AtLocation), (With<Npc>, Without<Player>)>,
     faction_query: Query<
         (&ActorName, &FactionPower, &FactionTension, &Description),
         With<FactionMarker>,

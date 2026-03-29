@@ -15,6 +15,8 @@ pub fn advance_fronts(
         return;
     }
 
+    let mut to_activate: Vec<String> = Vec::new();
+
     for (mut front, stages) in fronts.iter_mut() {
         if !front.active {
             continue;
@@ -32,6 +34,9 @@ pub fn advance_fronts(
                         front.name
                     ),
                 );
+                if let Some(succ) = &front.successor_front {
+                    to_activate.push(succ.clone());
+                }
                 continue;
             }
 
@@ -47,6 +52,22 @@ pub fn advance_fronts(
             }
         } else {
             front.countdown -= 1;
+        }
+    }
+
+    // Activate any successor fronts
+    for succ_name in to_activate {
+        for (mut front, _stages) in fronts.iter_mut() {
+            if front.name == succ_name && !front.active {
+                front.active = true;
+                front.stage = 0;
+                front.countdown = front.starting_countdown;
+                log.push_at(
+                    time.turn,
+                    format!("[{}] A new situation begins to unfold.", front.name),
+                );
+                break;
+            }
         }
     }
 }

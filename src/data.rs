@@ -57,6 +57,9 @@ pub struct FrontTemplate {
     pub description: String,
     pub starting_countdown: u32,
     pub stages: Vec<FrontStageTemplate>,
+    /// Optional name of a front to activate when this one resolves.
+    #[serde(default)]
+    pub successor_front: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -219,6 +222,8 @@ pub fn spawn_world(
                 stage: 0,
                 countdown: ft.starting_countdown,
                 active: true,
+                starting_countdown: ft.starting_countdown,
+                successor_front: ft.successor_front.clone(),
             },
             FrontStages(stages),
         ));
@@ -522,6 +527,7 @@ pub fn build_world_data() -> WorldData {
                 name: "The Guild's Gambit".into(),
                 description: "The Merchant Guild is executing a slow takeover of Ashenveil's docks and supply chains, squeezing out the Order and the Shadows.".into(),
                 starting_countdown: 4,
+                successor_front: None, // TODO TASK-009: worldbuild to wire successor
                 stages: vec![
                     FrontStageTemplate {
                         description: "The Guild begins buying up dock leases.".into(),
@@ -554,6 +560,7 @@ pub fn build_world_data() -> WorldData {
                 name: "Whispers from the Mine".into(),
                 description: "Something was discovered in the old collapsed mine east of town. People are starting to disappear.".into(),
                 starting_countdown: 7,
+                successor_front: None, // TODO TASK-009: worldbuild to wire successor
                 stages: vec![
                     FrontStageTemplate {
                         description: "Rumors of strange lights near the mine.".into(),

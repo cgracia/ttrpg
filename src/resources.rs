@@ -111,6 +111,7 @@ pub enum PlayerAction {
     AskAboutFaction(Entity),
     LeaveConversation,
     TravelTo(Entity),
+    Scout,
 }
 
 // ── Pending tick signal ───────────────────────────────────────────────────────

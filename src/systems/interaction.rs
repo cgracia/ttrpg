@@ -77,6 +77,7 @@ pub fn build_travel_options(
     player: Query<&AtLocation, With<Player>>,
     connections: Query<&Connections>,
     loc_names: Query<&ActorName, With<LocationMarker>>,
+    world: Res<WorldState>,
 ) {
     if *mode != GameMode::Travel {
         return;
@@ -100,6 +101,14 @@ pub fn build_travel_options(
             }
         }
 
+        // Location-specific actions
+        if world.location_entity("watchtower") == Some(at.0) {
+            interaction.options.push(InteractionOption {
+                label: "Scout the roads below".into(),
+                action: PlayerAction::Scout,
+            });
+        }
+
         interaction.options.push(InteractionOption {
             label: "Stay here".into(),
             action: PlayerAction::LeaveConversation,
@@ -114,7 +123,7 @@ pub fn execute_player_action(
     mode: &mut GameMode,
     interaction: &mut InteractionState,
     player_query: &mut Query<(&mut AtLocation, &mut Knowledge), (With<Player>, Without<Npc>)>,
-    npc_query: &Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth), (With<Npc>, Without<Player>)>,
+    npc_query: &Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth, &AtLocation), (With<Npc>, Without<Player>)>,
     faction_query: &Query<(&ActorName, &FactionPower, &FactionTension, &Description), With<FactionMarker>>,
     world: &WorldState,
     log: &mut EventLog,
@@ -123,7 +132,7 @@ pub fn execute_player_action(
     match action {
         PlayerAction::AskRumor => {
             if let Some(npc_entity) = interaction.selected_npc {
-                if let Ok((npc_name, knowledge, goals, traits, wealth)) = npc_query.get(npc_entity) {
+                if let Ok((npc_name, knowledge, goals, traits, wealth, _at)) = npc_query.get(npc_entity) {
                     // Prefer a rumor the NPC actually knows; fall back to trait-based generation
                     let (rumor_text, credibility) = if !knowledge.0.is_empty() {
                         let mut rng = rand::thread_rng();
@@ -182,6 +191,34 @@ pub fn execute_player_action(
             *mode = GameMode::Exploration;
             interaction.dialogue_lines.clear();
             interaction.options.clear();
+        }
+
+        PlayerAction::Scout => {
+            // Outdoor locations visible from the Watchtower
+            let outdoor_ids = ["town_square", "market", "docks", "back_alley", "watchtower"];
+            let outdoor_entities: Vec<Entity> = outdoor_ids
+                .iter()
+                .filter_map(|id| world.location_entity(id))
+                .collect();
+
+            let mut sightings: Vec<String> = npc_query
+                .iter()
+                .filter(|(_, _, _, _, _, at)| outdoor_entities.contains(&at.0))
+                .take(3)
+                .map(|(name, _, _, _, _, at)| {
+                    let loc = world.location_name(at.0).unwrap_or("somewhere");
+                    format!("{} near {}", name.0, loc)
+                })
+                .collect();
+
+            let msg = if sightings.is_empty() {
+                "The streets are quiet. No one moves through the open roads.".to_string()
+            } else {
+                format!("From above, you can see: {}.", sightings.join(", "))
+            };
+
+            log.push_at(time.turn, msg.clone());
+            interaction.dialogue_lines.push(msg);
         }
     }
 
