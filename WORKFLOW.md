@@ -144,6 +144,19 @@ The game requires `nix-shell shell.nix` to launch (X11 libs needed for Bevy).
 
 ---
 
+## Commit & Push Convention
+
+**Skills must commit and push all code changes before ending a session.**
+
+- Stage only relevant files (never `.env`, secrets, or unrelated changes)
+- Commit message format: short summary line referencing the issue (e.g. `Fix front pacing (TASK-009)`), then a blank line and a brief body if needed
+- Always push to `origin/master` after committing: `git push`
+- If there are only findings/session log changes (no code), commit those too
+
+Carlos reviews after the fact — commit often, push always.
+
+---
+
 ## Review Convention
 
 Carlos does periodic reviews. At review time:
