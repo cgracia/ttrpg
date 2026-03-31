@@ -471,13 +471,14 @@ pub fn handle_action_buttons(
     mut commands: Commands,
     mut mode: ResMut<GameMode>,
     mut interaction_state: ResMut<InteractionState>,
-    mut player_query: Query<(&mut AtLocation, &mut Knowledge), (With<Player>, Without<Npc>)>,
+    mut player_query: Query<(&mut AtLocation, &mut Knowledge, &mut Wealth), (With<Player>, Without<Npc>)>,
     npc_query:
         Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth, &AtLocation), (With<Npc>, Without<Player>)>,
-    faction_query: Query<
-        (&ActorName, &FactionPower, &FactionTension, &Description),
+    mut faction_query: Query<
+        (&ActorName, &mut FactionPower, &mut FactionTension, &Description),
         With<FactionMarker>,
     >,
+    mut front_query: Query<&mut Front>,
     world: Res<WorldState>,
     mut log: ResMut<EventLog>,
     time: Res<WorldTime>,
@@ -492,7 +493,8 @@ pub fn handle_action_buttons(
                     &mut interaction_state,
                     &mut player_query,
                     &npc_query,
-                    &faction_query,
+                    &mut faction_query,
+                    &mut front_query,
                     &world,
                     &mut log,
                     &time,

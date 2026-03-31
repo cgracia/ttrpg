@@ -62,6 +62,32 @@ pub fn build_interaction(
                 }
             }
 
+            // NPC-specific world-state actions
+            let npc_id = world.npc_id_of(npc_entity).unwrap_or("");
+
+            if npc_id == "lena" && !interaction.warned_lena {
+                interaction.options.push(InteractionOption {
+                    label: "Warn her about the Guild's plans".into(),
+                    action: PlayerAction::WarnLena,
+                });
+            }
+
+            if npc_id == "finn" {
+                // PayForInfo: wealth guard checked in execute_player_action
+                interaction.options.push(InteractionOption {
+                    label: "Pay for information (10 coin)".into(),
+                    action: PlayerAction::PayForInfo,
+                });
+            }
+
+            // ShareWithThess: 2-rumor gate checked in execute_player_action
+            if npc_id == "canon_thess" && !interaction.shared_with_thess {
+                interaction.options.push(InteractionOption {
+                    label: "Tell her what you know".into(),
+                    action: PlayerAction::ShareWithThess,
+                });
+            }
+
             interaction.options.push(InteractionOption {
                 label: "Leave".into(),
                 action: PlayerAction::LeaveConversation,
@@ -122,9 +148,10 @@ pub fn execute_player_action(
     commands: &mut Commands,
     mode: &mut GameMode,
     interaction: &mut InteractionState,
-    player_query: &mut Query<(&mut AtLocation, &mut Knowledge), (With<Player>, Without<Npc>)>,
+    player_query: &mut Query<(&mut AtLocation, &mut Knowledge, &mut Wealth), (With<Player>, Without<Npc>)>,
     npc_query: &Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth, &AtLocation), (With<Npc>, Without<Player>)>,
-    faction_query: &Query<(&ActorName, &FactionPower, &FactionTension, &Description), With<FactionMarker>>,
+    faction_query: &mut Query<(&ActorName, &mut FactionPower, &mut FactionTension, &Description), With<FactionMarker>>,
+    front_query: &mut Query<&mut Front>,
     world: &WorldState,
     log: &mut EventLog,
     time: &WorldTime,
@@ -146,7 +173,7 @@ pub fn execute_player_action(
                     interaction.dialogue_lines.push(format!("\"{}\"", rumor_text));
 
                     // Player learns the rumor
-                    if let Ok((_, mut player_know)) = player_query.single_mut() {
+                    if let Ok((_, mut player_know, _)) = player_query.single_mut() {
                         player_know.0.push(crate::components::Rumor {
                             text: rumor_text,
                             credibility,
@@ -183,7 +210,7 @@ pub fn execute_player_action(
         }
 
         PlayerAction::TravelTo(dest) => {
-            if let Ok((mut at_loc, _)) = player_query.single_mut() {
+            if let Ok((mut at_loc, _, _)) = player_query.single_mut() {
                 let dest_name = world.location_name(dest).unwrap_or("unknown");
                 log.push_at(time.turn, format!("You travel to {}.", dest_name));
                 at_loc.0 = dest;
@@ -222,6 +249,129 @@ pub fn execute_player_action(
 
             log.push_at(time.turn, msg.clone());
             interaction.dialogue_lines.push(msg);
+        }
+
+        PlayerAction::WarnLena => {
+            // Add +4 countdown to "The Guild's Gambit" or "The Iron Ledger" (whichever is active)
+            let target_names = ["The Guild's Gambit", "The Iron Ledger"];
+            for mut front in front_query.iter_mut() {
+                if front.active && target_names.contains(&front.name.as_str()) {
+                    front.countdown = front.countdown.saturating_add(4);
+                    break;
+                }
+            }
+            let msg = "You warn Lena about what you've heard. She listens carefully, then nods once. \
+                       \"I'll be careful.\" The Guild's timeline slips — for now.";
+            log.push_at(time.turn, msg.to_string());
+            interaction.dialogue_lines.push(msg.to_string());
+            interaction.warned_lena = true;
+            // Remove the WarnLena option from the current options list
+            interaction.options.retain(|o| !matches!(o.action, PlayerAction::WarnLena));
+        }
+
+        PlayerAction::PayForInfo => {
+            // Guard: require player wealth >= 10
+            let can_afford = player_query
+                .single()
+                .map(|(_, _, w)| w.0 >= 10)
+                .unwrap_or(false);
+
+            if !can_afford {
+                interaction.dialogue_lines.push(
+                    "You don't have enough coin.".to_string(),
+                );
+                return;
+            }
+
+            // Deduct wealth
+            if let Ok((_, mut player_know, mut wealth)) = player_query.single_mut() {
+                wealth.0 -= 10;
+
+                // Pick a rumor Finn knows; prefer one the player doesn't have yet
+                let rumor = if let Some(npc_entity) = interaction.selected_npc {
+                    npc_query.get(npc_entity).ok().and_then(|(_, knowledge, _, _, _, _)| {
+                        let unknown: Vec<&crate::components::Rumor> = knowledge.0.iter()
+                            .filter(|r| !player_know.0.iter().any(|pr| pr.text == r.text))
+                            .collect();
+                        if !unknown.is_empty() {
+                            let mut rng = rand::thread_rng();
+                            Some(unknown[rng.gen_range(0..unknown.len())].clone())
+                        } else if !knowledge.0.is_empty() {
+                            let mut rng = rand::thread_rng();
+                            Some(knowledge.0[rng.gen_range(0..knowledge.0.len())].clone())
+                        } else {
+                            None
+                        }
+                    })
+                } else {
+                    None
+                };
+
+                if let Some(r) = rumor {
+                    let msg = format!("Finn pockets the coin and leans in close. \"{}\"", r.text);
+                    log.push_at(time.turn, msg.clone());
+                    interaction.dialogue_lines.push(msg);
+                    player_know.0.push(r);
+                } else {
+                    let msg = "Finn pockets the coin and shrugs. \"Nothing new to tell, friend.\"";
+                    log.push_at(time.turn, msg.to_string());
+                    interaction.dialogue_lines.push(msg.to_string());
+                }
+            }
+
+            // 33% chance Shadows tension +8
+            let mut rng = rand::thread_rng();
+            if rng.gen_bool(0.33) {
+                if let Some(shadows_entity) = world.faction_entity("shadows") {
+                    if let Ok((_, _, mut tension, _)) = faction_query.get_mut(shadows_entity) {
+                        tension.0 = (tension.0 + 8).min(100);
+                    }
+                }
+                let notice_msg = "Finn's eyes drift toward the door as you leave. Someone noticed you were asking.";
+                log.push_at(time.turn, notice_msg.to_string());
+                interaction.dialogue_lines.push(notice_msg.to_string());
+            }
+        }
+
+        PlayerAction::ShareWithThess => {
+            // Guard: player must have at least 2 rumors
+            let rumor_count = player_query.single().map(|(_, k, _)| k.0.len()).unwrap_or(0);
+            if rumor_count < 2 {
+                interaction.dialogue_lines.push(
+                    "Canon Thess listens patiently. \"Come back when you have more to tell me.\"".to_string(),
+                );
+                return;
+            }
+
+            // Order +8 power
+            if let Some(order_entity) = world.faction_entity("order") {
+                if let Ok((_, mut power, _, _)) = faction_query.get_mut(order_entity) {
+                    power.0 = (power.0 + 8).min(100);
+                }
+            }
+
+            // Guild +5 tension
+            if let Some(guild_entity) = world.faction_entity("guild") {
+                if let Ok((_, _, mut tension, _)) = faction_query.get_mut(guild_entity) {
+                    tension.0 = (tension.0 + 5).min(100);
+                }
+            }
+
+            // "Whispers from the Mine" front countdown -4
+            for mut front in front_query.iter_mut() {
+                if front.active && front.name == "Whispers from the Mine" {
+                    front.countdown = front.countdown.saturating_sub(4);
+                    break;
+                }
+            }
+
+            let msg = "You share what you've learned with Canon Thess. She listens without speaking, \
+                       then: \"Then the Accord must speak.\" The Order stirs. \
+                       The mine's secret draws closer to daylight.";
+            log.push_at(time.turn, msg.to_string());
+            interaction.dialogue_lines.push(msg.to_string());
+            interaction.shared_with_thess = true;
+            interaction.options.retain(|o| !matches!(o.action, PlayerAction::ShareWithThess));
         }
     }
 

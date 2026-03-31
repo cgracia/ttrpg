@@ -170,3 +170,91 @@ faction power diverging (Guild 77, Order 27, Shadows 51). Core loop is healthy.
 - Faction tension: all at 60 (uniform, BAL-002 open)
 - Lena wealth: 358 (runaway, BAL-003 now open)
 - Fronts: both resolved ~T22/T16, static for 70 turns (BAL-001 open, TASK-007 pending)
+
+---
+
+## 2026-03-29 — Playtest Session 3
+
+**Skill**: playtest | **Mode**: Headless simulation | **Turns**: 0–100 (dumps at 25, 50, 75, 100)
+
+**Build**: Clean — same pre-existing warnings, no new errors.
+
+**BAL-002 VERIFIED FIXED**: Tensions at T25 are Guild=55, Order=30, Shadows=80. Diverge correctly from the start. Issue #4 closed.
+
+**BAL-001 SIGNIFICANTLY IMPROVED** (TASK-007 + TASK-009 in effect):
+- Whispers from the Mine resolves ~T28 (was T16)
+- The Guild's Gambit resolves ~T45 (was T22)
+- Successor fronts activate at those points; both resolve ~T55–T65
+- Dead zone now T65–T100 (~35 turns). Was dead at T22. Major progress, still open.
+
+**NEW — BAL-005 opened** (#21): Faction tension caps at 100 with no release mechanism.
+- Shadows hits 100 at T50, Guild hits 100 at T75. Both stay pegged for 25–50 turns.
+- No crisis fires, no decay, no consequence. Tension loses signal value.
+
+**BAL-003 ONGOING**: Lena Marsh 349 at T100, Aldric frozen at 200. TASK-012 still open.
+
+**BAL-004 ONGOING**: Order power 60→27 over 100 turns, trajectory confirmed. No task yet.
+
+**Simulation health**: NPC movement healthy. Rumor spread working (BUG-001 still fixed: Finn Crowe 7 rumors, Lena 7 rumors). Faction power diverging (Guild 82, Shadows 63, Order 27).
+
+---
+
+## 2026-03-29 — Designer Session 1
+
+**Skill**: designer | **Data source**: T50 + T100 simulation dumps, Playtest Session 3
+
+### Core diagnosis
+
+The simulation is generating *data* but not *stories*. Two layers exist:
+1. **Fronts** — authored narrative with player hooks. Live, legible.
+2. **Background simulation** — movement, wealth, tension, power. Always running, never speaking.
+
+When fronts go silent (~T65), the world is technically alive but experientially inert. Adding more fronts is a short-term patch. The long-term answer is giving the background simulation a *voice*.
+
+### Decisions made
+
+- **Target session length**: open question — logged as design consideration in DESIGN-002. Affects BAL-001 strategy.
+- **Order of Accord**: intentional decline vs. mechanical gap — flagged as decision point (TASK-013).
+
+### Findings opened
+
+- **DESIGN-002** (#22): Simulation needs a heartbeat — emergent events from stat thresholds. Major.
+
+### Tasks opened
+
+- **TASK-013** (#23): Designer decision — Order of Accord decline (intentional arc or gap?)
+- **TASK-014** (#24): Implement tension threshold events (architect + worldbuild, high priority)
+
+### Recommendation priority
+
+1. TASK-014 — tension threshold events (high impact, low-cost, unlocks world liveness post-fronts)
+2. TASK-013 — Order design decision (medium, answers BAL-004 direction)
+3. DESIGN-002 emergent events system — medium-term architecture work
+
+---
+
+## 2026-03-30 — Designer Session 2
+
+**Skill**: designer | **Tasks completed**: TASK-015
+
+### Core question answered
+
+The main gameplay loop: **undercover Crown investigator, investigating a hidden conspiracy, in a town where every front is a ticking clock against them.**
+
+Prototype target: ~T65. The scenario ends when the fronts resolve. The player's choices determine the shape of that ending.
+
+**Order of Accord decline**: intentional for the prototype. A waning institution as backdrop, not a mechanical problem to fix.
+
+### Scenario frame (DESIGN-003, findings/DESIGN-003-scenario-frame.md)
+
+- **Player**: The Envoy — arrives under cover as a traveling scribe. One contact (Lena Marsh). Knows nothing else.
+- **The conspiracy**: Aldric Voss (Guild) secretly funds Sable (Shadows) for enforcement. Mine contains evidence: the Crown's missing assessor, miners' remains, Vex's documents.
+- **Two new mechanics needed**: Evidence (rumor/testimony/document tiers) and Exposure (cover integrity with threshold events).
+- **Five ending states**: Crown Justice / Partial Case / Empty Hands / Burned / Untimely End.
+- **The clock**: front inflection points at T28, T45, T50, T65.
+
+### What this unblocks
+
+- TASK-016 (player action design) — now has full context to spec actions
+- Worldbuild — can tune starter rumors to plant the right breadcrumbs
+- Architect — evidence + exposure are the two new player stats needed

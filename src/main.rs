@@ -53,7 +53,9 @@ fn main() {
         .add_systems(
             Update,
             (
-                build_interaction,
+                // build_interaction must run before handle_action_buttons — both access
+                // FactionMarker components (one reads, one mutates after TASK-017).
+                build_interaction.before(handle_action_buttons),
                 build_travel_options,
                 update_player_panel,
                 update_location_panel,

@@ -19,3 +19,5 @@
 | BAL-002  | #4 |
 | UX-001   | #5 |
 | DESIGN-001 | #6 |
+| DESIGN-003 | #25 |
+| DESIGN-004 | #26 (comment) |

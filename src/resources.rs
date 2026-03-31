@@ -75,6 +75,14 @@ impl WorldState {
         self.factions.iter().find(|(fid, _, _)| fid == id).map(|(_, _, e)| *e)
     }
 
+    pub fn npc_entity(&self, id: &str) -> Option<Entity> {
+        self.npcs.iter().find(|(nid, _, _)| nid == id).map(|(_, _, e)| *e)
+    }
+
+    pub fn npc_id_of(&self, entity: Entity) -> Option<&str> {
+        self.npcs.iter().find(|(_, _, e)| *e == entity).map(|(id, _, _)| id.as_str())
+    }
+
     pub fn npc_name(&self, entity: Entity) -> Option<&str> {
         self.npcs.iter().find(|(_, _, e)| *e == entity).map(|(_, n, _)| n.as_str())
     }
@@ -97,6 +105,9 @@ pub struct InteractionState {
     pub selected_npc: Option<Entity>,
     pub dialogue_lines: Vec<String>,
     pub options: Vec<InteractionOption>,
+    /// Tracks one-time actions that cannot be repeated.
+    pub warned_lena: bool,
+    pub shared_with_thess: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -112,6 +123,9 @@ pub enum PlayerAction {
     LeaveConversation,
     TravelTo(Entity),
     Scout,
+    WarnLena,
+    PayForInfo,
+    ShareWithThess,
 }
 
 // ── Pending tick signal ───────────────────────────────────────────────────────
