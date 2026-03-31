@@ -25,6 +25,9 @@ pub struct FactionTemplate {
     pub starting_power: i32,
     #[serde(default)]
     pub starting_tension: i32,
+    /// Narrative events fired when tension first crosses a threshold: (threshold, text).
+    #[serde(default)]
+    pub tension_events: Vec<(i32, String)>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -101,6 +104,8 @@ pub fn spawn_world(
                 Description(ft.description.clone()),
                 FactionPower(ft.starting_power),
                 FactionTension(ft.starting_tension),
+                TensionEvents(ft.tension_events.clone()),
+                FiredThresholds::default(),
             ))
             .id();
         faction_map.insert(ft.id.clone(), e);
@@ -369,6 +374,10 @@ pub fn build_world_data() -> WorldData {
                 description: "Controls trade and credit in Ashenveil. Ruthlessly pragmatic.".into(),
                 starting_power: 65,
                 starting_tension: 30,
+                tension_events: vec![
+                    (75, "Aldric Voss calls an emergency meeting at the Guild Hall. The doors close and don't open for hours.".into()),
+                    (100, "Two dock merchants refuse Guild tribute and vanish the next morning.".into()),
+                ],
             },
             FactionTemplate {
                 id: "order".into(),
@@ -376,6 +385,10 @@ pub fn build_world_data() -> WorldData {
                 description: "Peacekeepers and mediators. Losing influence as tensions rise.".into(),
                 starting_power: 40,
                 starting_tension: 15,
+                tension_events: vec![
+                    (75, "Canon Thess has not been seen in the Town Square for three days.".into()),
+                    (100, "The Order of Accord withdraws from the markets. Their absence is felt immediately.".into()),
+                ],
             },
             FactionTemplate {
                 id: "shadows".into(),
@@ -383,6 +396,10 @@ pub fn build_world_data() -> WorldData {
                 description: "A criminal network operating through intimidation and blackmail.".into(),
                 starting_power: 45,
                 starting_tension: 55,
+                tension_events: vec![
+                    (75, "A Merchant Guild runner is found beaten near the River Docks. No witnesses.".into()),
+                    (100, "Sable's crew moves openly through the Market District. The Guild's enforcers look the other way.".into()),
+                ],
             },
         ],
         npcs: vec![

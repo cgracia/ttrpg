@@ -166,6 +166,16 @@ pub struct FactionPower(pub i32); // 0–100
 #[derive(Component, Clone, Debug, Default)]
 pub struct FactionTension(pub i32); // 0–100, tension with rivals
 
+/// Per-faction narrative events that fire when tension crosses a threshold.
+/// Each entry: (threshold_value, event_text). Checked each tick.
+#[derive(Component, Clone, Debug, Default)]
+pub struct TensionEvents(pub Vec<(i32, String)>);
+
+/// Tracks which tension thresholds have already fired for this faction.
+/// Prevents events from repeating.
+#[derive(Component, Clone, Debug, Default)]
+pub struct FiredThresholds(pub Vec<i32>);
+
 // ── Inventory / Resources ────────────────────────────────────────────────────
 
 #[derive(Component, Clone, Debug, Default)]

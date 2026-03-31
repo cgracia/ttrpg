@@ -9,7 +9,7 @@ use bevy::prelude::*;
 use data::build_world_data;
 use resources::*;
 use systems::debug::{screenshot_on_f12, state_dump_on_f11};
-use systems::fronts::{advance_fronts, faction_tension_effects};
+use systems::fronts::{advance_fronts, faction_tension_effects, faction_tension_thresholds};
 use systems::interaction::{build_interaction, build_travel_options};
 use systems::npc_ai::{faction_power_tick, npc_movement, npc_wealth_tick, spread_rumors};
 use systems::time::{advance_time, cleanup_tick};
@@ -44,6 +44,7 @@ fn main() {
                 faction_power_tick,
                 spread_rumors,
                 advance_fronts,
+                faction_tension_thresholds,
                 faction_tension_effects,
                 cleanup_tick,
             )

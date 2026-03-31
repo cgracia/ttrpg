@@ -144,10 +144,8 @@ The game requires `nix-shell shell.nix` to launch (X11 libs needed for Bevy).
   2. Focus game: `SWAYSOCK=/run/user/1000/sway-ipc.*.sock swaymsg '[title="Ashenveil"]' focus`
   3. Send F11: `YDOTOOL_SOCKET=/run/user/1000/.ydotool_socket nix-shell -p ydotool --run "ydotool key 87:1 87:0"`
 
-- **Screenshots (F12)**: Currently broken on Wayland (BUG-002 / issue #2). `scrot` captures
-  XWayland (`:0`) which has no content from the Wayland-native Bevy window, but exits 0 so
-  the fallback is never reached. Fix pending (TASK-006 / issue #12).
-  **Workaround**: use `grim` if available: `grim screenshots/latest.png`
+- **Screenshots (F12)**: Uses `grim` (Wayland-native) first, then `scrot` (X11), then Bevy API.
+  `grim` is available system-wide (`/run/current-system/sw/bin/grim`). BUG-002 resolved.
 
 ---
 

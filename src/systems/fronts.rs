@@ -1,7 +1,10 @@
 /// Advance evolving fronts (situations) each tick.
 use bevy::prelude::*;
 
-use crate::components::{Front, FrontStages, FactionMarker, FactionPower, FactionTension};
+use crate::components::{
+    Front, FrontStages, FactionMarker, FactionPower, FactionTension,
+    TensionEvents, FiredThresholds,
+};
 use crate::resources::{EventLog, TickEvent, WorldState, WorldTime};
 
 pub fn advance_fronts(
@@ -73,6 +76,31 @@ pub fn advance_fronts(
                     format!("[{}] A new situation begins to unfold.", front.name),
                 );
                 break;
+            }
+        }
+    }
+}
+
+/// Fire a narrative event the first time faction tension crosses a threshold.
+/// One event per faction per threshold — never repeats.
+pub fn faction_tension_thresholds(
+    tick: Option<Res<TickEvent>>,
+    mut factions: Query<
+        (&FactionTension, &TensionEvents, &mut FiredThresholds),
+        With<FactionMarker>,
+    >,
+    mut log: ResMut<EventLog>,
+    time: Res<WorldTime>,
+) {
+    if tick.is_none() {
+        return;
+    }
+
+    for (tension, events, mut fired) in factions.iter_mut() {
+        for (threshold, text) in &events.0 {
+            if tension.0 >= *threshold && !fired.0.contains(threshold) {
+                fired.0.push(*threshold);
+                log.push_at(time.turn, text.clone());
             }
         }
     }
