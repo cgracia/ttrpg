@@ -8,7 +8,8 @@
 | **architect** | ECS design, technical decisions | Tasks (technical), Findings (code/architecture) | Technical findings |
 | **worldbuild** | NPCs, locations, factions, fronts, content | Tasks (content), Findings (content gaps) | Content findings |
 | **playtest** | Build, run, observe, report | Tasks (from observations), Findings (bugs/balance/ux) | Any finding after verifying the fix |
-| **planner** | Backlog review, sprint planning, task assignment | Tasks (reorganize/create), — | — |
+| **planner** | Backlog review, sprint status, sprint planning | Tasks (reorganize/create), — | — |
+| **execute-sprint** | Orchestrate current sprint: invoke skills in order, then verify with playtest | — | — |
 | **narrative** | Dialogue, rumors, event text, world voice | Tasks (narrative work), Findings (design/narrative gaps) | Narrative findings |
 | **balance** | Simulation tuning, pacing, emergent dynamics | Tasks (for architect), Findings (balance) | Balance findings |
 | **art** | Visual direction, AI asset prompts, style consistency | Tasks (art sprints, UI work), Findings (ux/visual) | UX/visual findings |
@@ -123,6 +124,12 @@ artifacts — kept for reference but GitHub Issues are the source of truth.
 ### Worldbuild discovers a content gap
 1. `worldbuild` creates a finding issue: `gh issue create --label "finding,design,severity:minor"`
 2. Optionally creates a task issue for itself or designer
+
+### Normal sprint loop
+1. `/planner` (status) — see where the current sprint stands
+2. `/planner plan` — when ready to plan the next sprint (labels issues `sprint:current`)
+3. `/execute-sprint` — orchestrates current sprint: invokes skills in order, ends with playtest
+4. `/planner` (status) — confirm sprint closed cleanly, or surface anything that needs Carlos
 
 ---
 
