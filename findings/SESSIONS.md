@@ -320,3 +320,29 @@ With the dump fixed and BUG-003 resolved, the actual narrative event timeline fo
 - Dead zone: T63–T100
 
 Designer session 2 set prototype target at T65 (game ends when fronts resolve), so the dead zone is outside the intended play window. BAL-001 remains formally open but is not blocking prototype. The long-term fix (DESIGN-002: emergent events from stat thresholds) is the correct architectural direction — filed as design issue, no task yet.
+
+---
+
+## 2026-04-01 — Architect Session 3
+
+**Skill**: architect | **Tasks completed**: TASK-018, TASK-019
+
+### TASK-018 — Evidence component (`src/components.rs`, `src/data.rs`, `src/systems/interaction.rs`, `src/ui.rs`, `src/systems/debug.rs`)
+
+- Added `Evidence { testimony: u32, documents: u32 }` to player entity. Rumor count is NOT stored here — derived from `Knowledge.len()` at call sites to avoid stale data. Evidence score = `rumors×1 + testimony×3 + documents×5`.
+- Added `GatherTestimony` player action, wired for `npc_id == "tomas"` when player has ≥2 rumors and `!interaction.gathered_tomas_testimony`. One-time use flag in `InteractionState`. Grants `evidence.testimony += 1`.
+- Evidence score and tier counts shown in player panel UI (added 2 lines; bumped spawn from 5→7 text nodes) and F11 debug dump.
+
+### TASK-019 — Exposure component (`src/components.rs`, `src/data.rs`, `src/systems/player.rs`, `src/systems/interaction.rs`, `src/main.rs`, `src/simulate.rs`)
+
+- Added `Exposure { value: u32, vex_proximity_turns: u32 }`, `ExposureEvents(Vec<(u32, String)>)`, `FiredExposureThresholds(Vec<u32>)` to player.
+- New system `player_exposure_tick` in `src/systems/player.rs` (new module). Slotted after `spread_rumors` in chain.
+- Raise triggers: Back Alleys + Sable co-located (+8), Vex ≥2 consecutive turns (+5, resets), PayForInfo (+5), WarnLena (+3).
+- Passive -1/tick decay. One-shot threshold events at 33/66/100.
+- Exposure shown in player panel UI and F11 debug dump.
+
+### Design note
+
+`Evidence.rumors` was NOT added as a redundant field despite the task spec — `Knowledge.len()` is the canonical source and copying it creates sync risk. Score is computed on demand wherever needed.
+
+**Build**: Clean — no new errors. Both binaries compile and run.
