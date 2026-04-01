@@ -258,3 +258,65 @@ Prototype target: ~T65. The scenario ends when the fronts resolve. The player's 
 - TASK-016 (player action design) — now has full context to spec actions
 - Worldbuild — can tune starter rumors to plant the right breadcrumbs
 - Architect — evidence + exposure are the two new player stats needed
+
+---
+
+## 2026-03-31 — Playtest Session 4
+
+**Skill**: playtest | **Mode**: Headless simulation | **Turns**: 0–100 (dumps at 25, 50, 75, 100) + per-turn 0–38
+
+**Build**: Clean — 8 pre-existing dead-code warnings, no new errors. Both `ttrpg` and `simulate` binaries compile.
+
+### Verifying TASK-014 (tension threshold events)
+
+**BUG-003 OPENED** (#28, major): `faction_tension_thresholds` is not registered in `src/simulate.rs`. TASK-014 was wired into `src/main.rs` only. Zero tension threshold events appear in any dump across 100 turns. Fix is a one-line import + chain entry in simulate.rs.
+
+Tension timeline confirmed (per-turn sim):
+- Shadows: hits 75 at T17, hits 100 at T31 — no threshold events
+- Merchant Guild: hits 75 around T36–T40 (in longer runs) — no threshold events
+
+### Front pacing (BAL-001 re-check)
+
+Current state:
+- T25: Guild's Gambit stage 2/4 (countdown=5), Whispers stage 1/2 (countdown=2) — both active ✓
+- Whispers resolves ~T29. Guild's Gambit resolves ~T40. Successors activate at those points.
+- All 4 fronts complete by T67–T75. Dead zone: ~T67–T100.
+
+**BAL-001 status**: Major improvement from original (T22 dead), now ~T67 dead. Still open. Tension threshold events (once fixed) may fill some of this gap in windowed mode.
+
+### Ongoing confirmed findings
+
+- **BAL-003**: Lena Marsh reaches 382 wealth at T100, Aldric frozen at 200. Cause: Aldric has no Greedy trait and stays in guild_hall. TASK-012 still open.
+- **BAL-004**: Order of Accord power declines from 40 (T0) to 31 (T100). Confirmed intentional per designer. No task.
+- **BAL-005**: Merchant Guild and Shadows both hit tension=100 by T50 and stay pegged. No release mechanism. Still open.
+
+### TASK-017 (world-state player actions)
+
+Three NPC-specific actions (WarnLena, PayForInfo, ShareWithThess) added via commit 8aeb434. Not testable in headless mode — requires windowed playtest with UI interaction.
+
+### Simulation health
+
+NPC movement healthy. Rumor spread working (BUG-001 still fixed: most NPCs 5–7 rumors at T100, Sable isolated at 2 due to Back Alleys). Faction power diverging: Guild 82 / Shadows 53 / Order 31 at T100.
+
+---
+
+## 2026-04-01 — Architect Session 2
+
+**Skill**: architect | **Tasks completed**: BUG-003 fix
+
+### BUG-003 fixed
+
+Added `faction_tension_thresholds` to `src/simulate.rs` import and system chain (between `advance_fronts` and `faction_tension_effects`). Fix is one import line + one chain entry. Verified: threshold events fire at T20, T28, T31, T40 in a 40-turn test run. Issue #28 closed.
+
+### Dump improvement: narrative events section
+
+`build_dump` in `simulate.rs` now includes a `NARRATIVE EVENTS (all)` section that filters out movement/wealth noise and shows all non-trivial events in reverse chronological order (up to 30). This was needed because the `RECENT EVENTS (last 10)` window was being completely dominated by NPC movement events, hiding front progression and tension events. Previous playtest sessions were only seeing partial event timelines as a result.
+
+### BAL-001 revised picture
+
+With the dump fixed and BUG-003 resolved, the actual narrative event timeline for a 100-turn run:
+- T9, T15, T20×2, T28, T29, T31×2, T40×3, T41, T51×2, T52×3, T61, T62
+- 21 narrative events, excellent density through T62
+- Dead zone: T63–T100
+
+Designer session 2 set prototype target at T65 (game ends when fronts resolve), so the dead zone is outside the intended play window. BAL-001 remains formally open but is not blocking prototype. The long-term fix (DESIGN-002: emergent events from stat thresholds) is the correct architectural direction — filed as design issue, no task yet.
