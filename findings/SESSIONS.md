@@ -346,3 +346,21 @@ Designer session 2 set prototype target at T65 (game ends when fronts resolve), 
 `Evidence.rumors` was NOT added as a redundant field despite the task spec — `Knowledge.len()` is the canonical source and copying it creates sync risk. Score is computed on demand wherever needed.
 
 **Build**: Clean — no new errors. Both binaries compile and run.
+
+---
+
+## 2026-04-01 — Worldbuild Session 2
+
+**Skill**: worldbuild | **Tasks completed**: TASK-004
+
+### TASK-004 — Petra Vane, Market District NPC (`src/data.rs`)
+
+Added **Petra Vane** — market stall keeper, `StayPut` routine at `market`. Neutral faction (no guild/order/shadows tag); greedy + cautious traits; goals: wealth, survive.
+
+**Simulation health**: Present at Market District at every check (T10, T20, T30, T40, T50, T60). UX-001 closed.
+
+**Starter rumors** (two):
+1. Guild tribute collectors removing stall holders — corroborates the tribute extraction arc (Guild's Gambit / Iron Ledger)
+2. "Someone's watching a new face in town" — narrative texture for the Exposure system; player can learn Sable is watching them
+
+**Known side effect**: Greedy+StayPut causes wealth runaway (35→193 by T60). Same issue as Lena Marsh (BAL-003/TASK-012) — not blocking, tracked separately.
