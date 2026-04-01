@@ -186,7 +186,28 @@ fn build_dump(
     }
     out.push('\n');
 
-    // Recent events
+    // Narrative events — filter out trivial movement/wealth entries
+    let is_trivial = |text: &str| {
+        text.contains("moves to")
+            || text.contains("picks up a rumor")
+            || text.contains("profitable deal")
+    };
+    out.push_str("── NARRATIVE EVENTS (all) ──\n");
+    let narrative: Vec<_> = event_log
+        .recent(usize::MAX)
+        .filter(|e| e.turn > 0 && !is_trivial(&e.text))
+        .take(30)
+        .collect();
+    if narrative.is_empty() {
+        out.push_str("  (none)\n");
+    } else {
+        for entry in narrative {
+            out.push_str(&format!("  [T{}] {}\n", entry.turn, entry.text));
+        }
+    }
+    out.push('\n');
+
+    // Recent events — all, last 10
     out.push_str("── RECENT EVENTS (last 10) ──\n");
     for entry in event_log.recent(10) {
         if entry.turn > 0 {
