@@ -561,6 +561,23 @@ pub fn build_world_data() -> WorldData {
                 ],
             },
             NpcTemplate {
+                id: "petra".into(),
+                name: "Petra Vane".into(),
+                description: "Market stall keeper. Sells grain, cloth, and information — depending on what you're buying.".into(),
+                faction: "".into(),
+                location: "market".into(),
+                stats: StatsTemplate { strength: 4, charisma: 6, cunning: 7, resolve: 5 },
+                traits: vec!["greedy".into(), "cautious".into()],
+                goals: vec!["wealth".into(), "survive".into()],
+                wealth: 35,
+                routine: "stay".into(),
+                patrol: vec![],
+                starter_rumors: vec![
+                    "The Guild's collectors came through last week. Three stalls closed the next day. Nobody asks where the owners went.".into(),
+                    "Someone's been watching a new face in town. Whoever's doing the watching, they're good at it — but I see things from behind a stall counter.".into(),
+                ],
+            },
+            NpcTemplate {
                 id: "tomas".into(),
                 name: "Tomas Reed".into(),
                 description: "Young guild clerk. Discovers things he shouldn't. Growing fearful.".into(),
