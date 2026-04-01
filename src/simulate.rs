@@ -18,7 +18,7 @@ use std::time::Duration;
 
 use data::build_world_data;
 use resources::{EventLog, GameMode, InteractionState, TickEvent, WorldState, WorldTime};
-use systems::fronts::{advance_fronts, faction_tension_effects};
+use systems::fronts::{advance_fronts, faction_tension_effects, faction_tension_thresholds};
 use systems::npc_ai::{faction_power_tick, npc_movement, npc_wealth_tick, spread_rumors};
 use systems::time::cleanup_tick;
 
@@ -53,6 +53,7 @@ fn main() {
                 faction_power_tick,
                 spread_rumors,
                 advance_fronts,
+                faction_tension_thresholds,
                 faction_tension_effects,
                 cleanup_tick,
                 check_limit,
