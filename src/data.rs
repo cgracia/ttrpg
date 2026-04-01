@@ -258,6 +258,27 @@ pub fn spawn_world(
             Knowledge::default(),
             Wealth(20),
             AtLocation(player_start),
+            Evidence::default(),
+            Exposure::default(),
+            ExposureEvents(vec![
+                (
+                    33,
+                    "Finn Crowe mentioned to someone that a traveling scribe has been asking \
+                     unusual questions."
+                        .into(),
+                ),
+                (
+                    66,
+                    "A figure has been seen near wherever you go. Shadow-affiliated — \
+                     watching, not moving yet."
+                        .into(),
+                ),
+                (
+                    100,
+                    "Sable makes a move. You have run out of time.".into(),
+                ),
+            ]),
+            FiredExposureThresholds::default(),
         ));
         world_state.player_location = Some(player_start);
         event_log.push("You arrive in Ashenveil. The town is tense.".to_string());

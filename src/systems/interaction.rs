@@ -11,6 +11,7 @@ pub fn build_interaction(
     mode: Res<GameMode>,
     npcs: Query<(&ActorName, &Description, &Goals, &Traits, &AtLocation, Option<&FactionMember>), With<Npc>>,
     factions: Query<(&ActorName, &FactionPower, &FactionTension), With<FactionMarker>>,
+    player: Query<&Knowledge, With<Player>>,
     world: Res<WorldState>,
 ) {
     if let GameMode::Interaction(npc_entity) = *mode {
@@ -64,6 +65,7 @@ pub fn build_interaction(
 
             // NPC-specific world-state actions
             let npc_id = world.npc_id_of(npc_entity).unwrap_or("");
+            let player_rumors = player.single().map(|k| k.0.len()).unwrap_or(0);
 
             if npc_id == "lena" && !interaction.warned_lena {
                 interaction.options.push(InteractionOption {
@@ -85,6 +87,14 @@ pub fn build_interaction(
                 interaction.options.push(InteractionOption {
                     label: "Tell her what you know".into(),
                     action: PlayerAction::ShareWithThess,
+                });
+            }
+
+            // GatherTestimony: available with Tomas when player has ≥ 2 rumors
+            if npc_id == "tomas" && !interaction.gathered_tomas_testimony && player_rumors >= 2 {
+                interaction.options.push(InteractionOption {
+                    label: "Ask about what you witnessed at the Guild".into(),
+                    action: PlayerAction::GatherTestimony,
                 });
             }
 
@@ -148,7 +158,10 @@ pub fn execute_player_action(
     commands: &mut Commands,
     mode: &mut GameMode,
     interaction: &mut InteractionState,
-    player_query: &mut Query<(&mut AtLocation, &mut Knowledge, &mut Wealth), (With<Player>, Without<Npc>)>,
+    player_query: &mut Query<
+        (&mut AtLocation, &mut Knowledge, &mut Wealth, &mut Evidence, &mut Exposure),
+        (With<Player>, Without<Npc>),
+    >,
     npc_query: &Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth, &AtLocation), (With<Npc>, Without<Player>)>,
     faction_query: &mut Query<(&ActorName, &mut FactionPower, &mut FactionTension, &Description), With<FactionMarker>>,
     front_query: &mut Query<&mut Front>,
@@ -173,7 +186,7 @@ pub fn execute_player_action(
                     interaction.dialogue_lines.push(format!("\"{}\"", rumor_text));
 
                     // Player learns the rumor
-                    if let Ok((_, mut player_know, _)) = player_query.single_mut() {
+                    if let Ok((_, mut player_know, _, _, _)) = player_query.single_mut() {
                         player_know.0.push(crate::components::Rumor {
                             text: rumor_text,
                             credibility,
@@ -210,7 +223,7 @@ pub fn execute_player_action(
         }
 
         PlayerAction::TravelTo(dest) => {
-            if let Ok((mut at_loc, _, _)) = player_query.single_mut() {
+            if let Ok((mut at_loc, _, _, _, _)) = player_query.single_mut() {
                 let dest_name = world.location_name(dest).unwrap_or("unknown");
                 log.push_at(time.turn, format!("You travel to {}.", dest_name));
                 at_loc.0 = dest;
@@ -265,7 +278,10 @@ pub fn execute_player_action(
             log.push_at(time.turn, msg.to_string());
             interaction.dialogue_lines.push(msg.to_string());
             interaction.warned_lena = true;
-            // Remove the WarnLena option from the current options list
+            // Exposure: warning Lena reveals investigative interest (+3)
+            if let Ok((_, _, _, _, mut exposure)) = player_query.single_mut() {
+                exposure.value = (exposure.value + 3).min(100);
+            }
             interaction.options.retain(|o| !matches!(o.action, PlayerAction::WarnLena));
         }
 
@@ -273,7 +289,7 @@ pub fn execute_player_action(
             // Guard: require player wealth >= 10
             let can_afford = player_query
                 .single()
-                .map(|(_, _, w)| w.0 >= 10)
+                .map(|(_, _, w, _, _)| w.0 >= 10)
                 .unwrap_or(false);
 
             if !can_afford {
@@ -283,9 +299,10 @@ pub fn execute_player_action(
                 return;
             }
 
-            // Deduct wealth
-            if let Ok((_, mut player_know, mut wealth)) = player_query.single_mut() {
+            // Deduct wealth; raise exposure (buying info is a cover risk)
+            if let Ok((_, mut player_know, mut wealth, _, mut exposure)) = player_query.single_mut() {
                 wealth.0 -= 10;
+                exposure.value = (exposure.value + 5).min(100);
 
                 // Pick a rumor Finn knows; prefer one the player doesn't have yet
                 let rumor = if let Some(npc_entity) = interaction.selected_npc {
@@ -335,7 +352,7 @@ pub fn execute_player_action(
 
         PlayerAction::ShareWithThess => {
             // Guard: player must have at least 2 rumors
-            let rumor_count = player_query.single().map(|(_, k, _)| k.0.len()).unwrap_or(0);
+            let rumor_count = player_query.single().map(|(_, k, _, _, _)| k.0.len()).unwrap_or(0);
             if rumor_count < 2 {
                 interaction.dialogue_lines.push(
                     "Canon Thess listens patiently. \"Come back when you have more to tell me.\"".to_string(),
@@ -372,6 +389,19 @@ pub fn execute_player_action(
             interaction.dialogue_lines.push(msg.to_string());
             interaction.shared_with_thess = true;
             interaction.options.retain(|o| !matches!(o.action, PlayerAction::ShareWithThess));
+        }
+
+        PlayerAction::GatherTestimony => {
+            if let Ok((_, _, _, mut evidence, _)) = player_query.single_mut() {
+                evidence.testimony += 1;
+            }
+            let msg = "Tomas hesitates, then speaks in a low voice. \
+                       \"I saw an entry in the ledger. The next day it was gone. \
+                       I don't know who changed it — but I know what it said.\"";
+            log.push_at(time.turn, msg.to_string());
+            interaction.dialogue_lines.push(msg.to_string());
+            interaction.gathered_tomas_testimony = true;
+            interaction.options.retain(|o| !matches!(o.action, PlayerAction::GatherTestimony));
         }
     }
 

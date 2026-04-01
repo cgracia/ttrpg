@@ -108,6 +108,7 @@ pub struct InteractionState {
     /// Tracks one-time actions that cannot be repeated.
     pub warned_lena: bool,
     pub shared_with_thess: bool,
+    pub gathered_tomas_testimony: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -126,6 +127,7 @@ pub enum PlayerAction {
     WarnLena,
     PayForInfo,
     ShareWithThess,
+    GatherTestimony,
 }
 
 // ── Pending tick signal ───────────────────────────────────────────────────────

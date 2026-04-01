@@ -70,7 +70,7 @@ pub fn spawn_ui(mut commands: Commands) {
                 ))
                 .with_children(|p| {
                     p.spawn(ui_text("PLAYER", 13.0, ACCENT));
-                    for _ in 0..5 {
+                    for _ in 0..7 {
                         p.spawn(ui_text("", 12.0, TEXT));
                     }
                 });
@@ -226,7 +226,7 @@ pub fn spawn_map_nodes(
 // -- Update systems ----------------------------------------------------------
 
 pub fn update_player_panel(
-    player: Query<(&AtLocation, &Wealth, &Knowledge, &Stats), With<Player>>,
+    player: Query<(&AtLocation, &Wealth, &Knowledge, &Stats, &Evidence, &Exposure), With<Player>>,
     loc_names: Query<(&ActorName, &Description), With<LocationMarker>>,
     world_time: Res<WorldTime>,
     panel_children: Query<&Children, With<PlayerPanelUi>>,
@@ -235,7 +235,7 @@ pub fn update_player_panel(
     let Ok(children) = panel_children.single() else {
         return;
     };
-    let Ok((at_loc, wealth, knowledge, stats)) = player.single() else {
+    let Ok((at_loc, wealth, knowledge, stats, evidence, exposure)) = player.single() else {
         return;
     };
 
@@ -244,6 +244,7 @@ pub fn update_player_panel(
         .map(|(n, _)| n.0.as_str())
         .unwrap_or("?");
 
+    let evidence_score = knowledge.0.len() as u32 + evidence.testimony * 3 + evidence.documents * 5;
     let lines = [
         format!("Turn {}", world_time.turn),
         format!("Location: {}", loc_name),
@@ -253,6 +254,8 @@ pub fn update_player_panel(
             stats.strength, stats.charisma, stats.cunning, stats.resolve
         ),
         format!("Knowledge: {} rumors", knowledge.0.len()),
+        format!("Evidence: {}pt (t:{} d:{})", evidence_score, evidence.testimony, evidence.documents),
+        format!("Exposure: {}/100", exposure.value),
     ];
 
     for (i, child) in children.iter().enumerate().skip(1) {
@@ -471,7 +474,10 @@ pub fn handle_action_buttons(
     mut commands: Commands,
     mut mode: ResMut<GameMode>,
     mut interaction_state: ResMut<InteractionState>,
-    mut player_query: Query<(&mut AtLocation, &mut Knowledge, &mut Wealth), (With<Player>, Without<Npc>)>,
+    mut player_query: Query<
+        (&mut AtLocation, &mut Knowledge, &mut Wealth, &mut Evidence, &mut Exposure),
+        (With<Player>, Without<Npc>),
+    >,
     npc_query:
         Query<(&ActorName, &Knowledge, &Goals, &Traits, &Wealth, &AtLocation), (With<Npc>, Without<Player>)>,
     mut faction_query: Query<

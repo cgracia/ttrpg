@@ -181,6 +181,35 @@ pub struct FiredThresholds(pub Vec<i32>);
 #[derive(Component, Clone, Debug, Default)]
 pub struct Wealth(pub i32);
 
+// ── Player investigation stats ────────────────────────────────────────────────
+
+/// Evidence gathered by tier. Rumor count is not stored here — derive it from
+/// `Knowledge.len()` at the call site to avoid redundancy.
+/// Score = Knowledge.len() × 1  +  testimony × 3  +  documents × 5.
+#[derive(Component, Clone, Debug, Default)]
+pub struct Evidence {
+    pub testimony: u32,
+    pub documents: u32,
+}
+
+/// Player cover integrity: 0 = intact, 100 = blown.
+/// Raised by risky actions and NPC proximity; decays by 1 per tick passively.
+#[derive(Component, Clone, Debug, Default)]
+pub struct Exposure {
+    pub value: u32,
+    /// Consecutive ticks co-located with Vex — resets when Vex is elsewhere.
+    pub vex_proximity_turns: u32,
+}
+
+/// Threshold events for player exposure (same pattern as faction TensionEvents).
+/// Each entry: (threshold, event_text). Events fire once when value first crosses threshold.
+#[derive(Component, Clone, Debug, Default)]
+pub struct ExposureEvents(pub Vec<(u32, String)>);
+
+/// Tracks which exposure thresholds have already fired (same pattern as FiredThresholds).
+#[derive(Component, Clone, Debug, Default)]
+pub struct FiredExposureThresholds(pub Vec<u32>);
+
 // ── Front (evolving situation) ────────────────────────────────────────────────
 
 #[derive(Component, Clone, Debug)]

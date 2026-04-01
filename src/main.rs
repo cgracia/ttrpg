@@ -12,6 +12,7 @@ use systems::debug::{screenshot_on_f12, state_dump_on_f11};
 use systems::fronts::{advance_fronts, faction_tension_effects, faction_tension_thresholds};
 use systems::interaction::{build_interaction, build_travel_options};
 use systems::npc_ai::{faction_power_tick, npc_movement, npc_wealth_tick, spread_rumors};
+use systems::player::player_exposure_tick;
 use systems::time::{advance_time, cleanup_tick};
 use components::*;
 use ui::*;
@@ -43,6 +44,7 @@ fn main() {
                 npc_wealth_tick,
                 faction_power_tick,
                 spread_rumors,
+                player_exposure_tick,
                 advance_fronts,
                 faction_tension_thresholds,
                 faction_tension_effects,

@@ -66,7 +66,7 @@ pub fn state_dump_on_f11(
     world_time: Res<WorldTime>,
     world_state: Res<WorldState>,
     event_log: Res<EventLog>,
-    player_q: Query<(&AtLocation, &Wealth, &Knowledge, &Stats), With<Player>>,
+    player_q: Query<(&AtLocation, &Wealth, &Knowledge, &Stats, &Evidence, &Exposure), With<Player>>,
     npc_q: Query<
         (
             &ActorName,
@@ -112,8 +112,10 @@ pub fn state_dump_on_f11(
     ));
 
     // Player
-    if let Ok((at_loc, wealth, knowledge, stats)) = player_q.single() {
+    if let Ok((at_loc, wealth, knowledge, stats, evidence, exposure)) = player_q.single() {
         let loc_name = world_state.location_name(at_loc.0).unwrap_or("?");
+        let evidence_score =
+            knowledge.0.len() as u32 + evidence.testimony * 3 + evidence.documents * 5;
         out.push_str("── PLAYER ──\n");
         out.push_str(&format!("  Location: {}\n", loc_name));
         out.push_str(&format!("  Wealth: {}\n", wealth.0));
@@ -128,6 +130,11 @@ pub fn state_dump_on_f11(
                 rumor.turn_learned, rumor.credibility, rumor.text
             ));
         }
+        out.push_str(&format!(
+            "  Evidence: {}pt total (testimony:{}, documents:{})\n",
+            evidence_score, evidence.testimony, evidence.documents
+        ));
+        out.push_str(&format!("  Exposure: {}/100\n", exposure.value));
         out.push('\n');
     }
 
